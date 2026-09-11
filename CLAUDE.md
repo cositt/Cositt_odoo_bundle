@@ -135,3 +135,46 @@ carpeta del proyecto.
   contenido de esas carpetas sin petición explícita.
 - No hacer commit/push salvo petición explícita del usuario.
 - No instalar dependencias/paquetes nuevos sin confirmar antes.
+
+## Plugin 03 — cositt_quick_whatsapp (cerrado)
+
+Botón de WhatsApp junto al teléfono en la ficha de Contacto. Abre
+`https://wa.me/<dígitos>` en pestaña nueva. Sin modelo nuevo, sin ACL
+nueva, sin dependencias externas (no usa la API de WhatsApp Business).
+
+Alcance: solo Contactos por ahora (no CRM ni Ventas) — decisión deliberada
+para no forzar instalar esas apps solo por este botón; documentado en el
+README como backlog de módulos puente opcionales.
+
+Hallazgo del review (HIGH) importante: el respaldo para cuando
+`phone_sanitized` falla (sin país en la compañía, sin prefijo +CC) no
+validaba nada — con un teléfono con varios números separados por "/",
+o una extensión, o demasiado corto, generaba un enlace `wa.me` roto SIN
+avisar al usuario. Corregido: ahora detecta esos casos y lanza `UserError`
+en vez de construir un enlace inválido en silencio.
+
+Lección reforzada (ya van 3 veces): la librería `phonenumbers` que usa
+Odoo es mucho más permisiva de lo intuitivo — reconoce "00" como prefijo
+internacional y limpia extensiones tipo "ext 45" *dentro del propio
+`phone_sanitized`*, así que varios de mis tests iniciales fallaron por
+asumir que esos casos caerían en el respaldo cuando en realidad Odoo ya
+los resuelve en el camino normal. Solución: testear la función pura de
+respaldo (`_extract_single_phone_digits`) de forma aislada con
+`BaseCase`, sin pasar por el ORM/`phone_validation`, para no depender de
+comportamiento empírico de una librería externa en los tests unitarios.
+
+Otro hallazgo (MEDIUM) del review: el xpath para insertar el botón usaba
+un índice posicional `(//field[@name='phone'])[1]` porque el campo phone
+aparece dos veces en `base.view_partner_form` (cabecera + plantilla de
+contactos hijos dentro del `<notebook>`) con los mismos atributos. Un
+índice de documento es frágil ante reordenamientos futuros del core sin
+avisar (no falla, solo coloca mal el botón). Corregido: ancla a
+`div.mb8` (contenedor único de la cabecera, verificado que solo aparece
+una vez en el archivo). Añadido test que verifica la posición real del
+botón en el arch resuelto (antes del `<notebook>`), para que un futuro
+cambio de core que rompa esto falle el test en vez de pasar desapercibido.
+
+13 tests. Validado en navegador real: contacto con teléfono "611-222-333"
+(sin prefijo, compañía con España configurada) → abrió
+`api.whatsapp.com/send/?phone=34611222333...` → WhatsApp confirmó
+"+34 611 22 23 33". Manual PDF generado igual que los anteriores.

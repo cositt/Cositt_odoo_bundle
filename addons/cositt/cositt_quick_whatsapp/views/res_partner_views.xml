@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_partner_form_inherit_whatsapp" model="ir.ui.view">
+        <field name="name">res.partner.form.inherit.cositt.whatsapp</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <!-- El campo "phone" aparece más de una vez en esta vista (la
+                 cabecera principal y, más abajo, la lista de personas de
+                 contacto de una empresa) con los mismos atributos, así que
+                 una coincidencia implícita por atributos sería ambigua.
+                 Se ancla al div.mb8 (contenedor único de la cabecera con
+                 nombre/email/teléfono, fuera del <notebook> donde vive la
+                 lista de contactos hijos) en vez de un índice de documento,
+                 para que un futuro cambio de orden en el core rompa la
+                 instalación (xpath no encontrado) en vez de colocar el
+                 botón en el sitio equivocado sin avisar. -->
+            <xpath expr="(//div[hasclass('mb8')]//field[@name='phone'])[1]" position="after">
+                <button name="action_open_whatsapp" type="object"
+                        icon="fa-whatsapp"
+                        class="btn btn-link p-0 ms-1 text-success"
+                        title="Abrir WhatsApp"
+                        invisible="not phone"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
