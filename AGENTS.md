@@ -41,6 +41,10 @@ cositt_xxxxx/
 
 - Solo crear las carpetas que el módulo realmente necesite.
 - ORM de Odoo, evitar SQL directo.
+- **Restricciones SQL**: esta build de Odoo 19 ya NO soporta la lista
+  clásica `_sql_constraints = [(...)]` (se ignora en silencio con un
+  warning en el log). Usar la API declarativa:
+  `_nombre = models.Constraint("unique(campo)", "mensaje de error")`.
 - Evitar monkey patching y overrides completos de métodos: usar `super()`.
 - Seguridad mínima necesaria (`ir.model.access.csv` + grupos si aplica).
 - Un módulo, una función concreta y fácil de entender.

@@ -178,3 +178,38 @@ cambio de core que rompa esto falle el test en vez de pasar desapercibido.
 (sin prefijo, compañía con España configurada) → abrió
 `api.whatsapp.com/send/?phone=34611222333...` → WhatsApp confirmó
 "+34 611 22 23 33". Manual PDF generado igual que los anteriores.
+
+## Plugin 04 — cositt_smart_attachment_name (cerrado)
+
+Reglas simples ({campo}/{campo.subcampo}, sin código) para renombrar
+adjuntos al subirlos a un modelo, vía Ajustes > Técnico. Resolución de
+placeholders con `record.mapped()` (nunca eval, cero riesgo de inyección).
+
+**Hallazgo importante de infraestructura**: esta build de Odoo 19
+(20260810) **ya no soporta `_sql_constraints`** (la lista de tuplas
+clásica) — se ignora en silencio con un warning en el log
+("Model attribute '_sql_constraints' is no longer supported"). Hay que
+usar la nueva API declarativa `models.Constraint`:
+```python
+_model_uniq = models.Constraint("unique(model_id)", "mensaje")
+```
+Aplica a cualquier plugin futuro que declare constraints SQL.
+
+Review encontró 1 HIGH real: la restricción `unique(model_id)` bloqueaba
+crear una regla nueva si la única regla anterior para ese modelo estaba
+archivada (SQL unique no distingue activo/inactivo). Corregido:
+`@api.constrains` en Python que solo exige unicidad entre reglas
+**activas**, permitiendo archivar y reemplazar libremente. Ojo: al quitar
+`models.Constraint` del código, la restricción SQL vieja quedó huérfana
+en la base — Odoo la limpió solo al terminar el `-u` siguiente (no hace
+falta borrarla a mano, pero sí esperar a que term "-u" complete antes de
+volver a testear).
+
+También corregidos (MEDIUM del review): valores falsy (0/False) ya no se
+confunden con "campo vacío"; `{parent_id}` sin subcampo ahora usa
+`display_name` en vez del repr interno del registro.
+
+14 tests (incluye batch multi-registro, campo relacional sin subcampo,
+valor 0 legítimo, reactivar regla archivada). Validado en navegador real:
+regla en Contactos + subida por chatter → `Contacto_Pedro_Sánchez.pdf`
+verificado directo en BD. Regla de prueba borrada después (dev limpio).
