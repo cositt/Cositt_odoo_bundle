@@ -59,7 +59,73 @@ con datos reales variados, no solo con el primer ejemplo que "cuadra".
 capturas reales de Chrome sobre el propio entorno + Chrome headless
 `--print-to-pdf`. Ya hecho para este plugin.
 
-`git init` + primer commit ya realizados (commit `8129dbf`, rama `main`).
+`git init` + primer commit ya realizados. Repo remoto conectado y con push:
+`github.com/cositt/Cositt_odoo_bundle` (rama `main`). Es un mono-repo para
+los 12 plugins — no implica instalarlos todos juntos, cada uno sigue siendo
+independiente (`__manifest__.py` propio).
+
+## Plugin 02 — cositt_duplicate_contacts (en curso)
+
+Decisión de arquitectura clave: **no reimplementar la fusión de contactos**.
+Odoo 19 Community ya trae `base.partner.merge.automatic.wizard`
+(`base.action_partner_merge` / `base.action_partner_deduplicate`), oculto sin
+menú, que reasigna facturas/mensajes/actividades de forma segura al fusionar.
+El plugin solo:
+- Hereda ese wizard añadiendo `group_by_phone_sanitized` (reusa el campo
+  `phone_sanitized` que Odoo ya normaliza, no reinventamos parsing de tel.).
+- Hace un **override completo** (no `super()`) de `_generate_query`: el
+  core solo excluye NULL del `GROUP BY` para email/name/vat (hardcoded, sin
+  hook), así que sin este ajuste agrupar por teléfono uniría en un solo
+  "grupo duplicado" a TODOS los contactos sin teléfono.
+- Añade `self.env.flush_all()` porque `phone_sanitized` es un campo
+  computado+almacenado y la consulta va por SQL crudo (`cr.execute`), que no
+  ve valores pendientes de flush de la misma transacción — verificado
+  directamente (sin el flush, `SELECT phone_sanitized ...` devolvía NULL
+  aunque el recordset ya mostraba el valor calculado).
+- Añade menú "Detectar duplicados" en Contactos (acción propia con
+  `context` de defaults, sin tocar las acciones nativas de Odoo).
+
+Sin dependencias externas, sin modelo nuevo, sin ACL nueva (usa los permisos
+ya existentes de `base` sobre el wizard).
+
+Validado en Docker: 5/5 tests. Validado en navegador real: creé dos
+contactos "Pedro Sanchez Lopez" / "Pedro Sánchez" con el mismo teléfono en
+formato distinto, el plugin los detectó y la fusión nativa transfirió el
+email correctamente. Nota: hubo que fijar país España en la compañía dev
+(antes en `False`) porque `phone_sanitized` no normaliza números sin
+prefijo de país si la compañía no tiene país configurado — mismo hallazgo
+que en Plugin 01.
+
+**Code review completado y aplicado.** 1 HIGH + 3 MEDIUM + 3 LOW, todos
+corregidos:
+- Faltaba `phone_validation` en `depends` — `phone_sanitized` es de ese
+  módulo (vía `contacts`→`mail` lo trae transitivo hoy, pero sin declararlo
+  alguien podría desinstalarlo y romper la consulta SQL sin aviso).
+- Override de `_generate_query` sin ancla de versión — añadido comentario
+  explícito "re-diffear en cada upgrade de Odoo" con referencia al método
+  origen.
+- Defaults del menú (`Email` + `Teléfono` marcados juntos) aplicaban AND y
+  ocultaban justo el caso nuevo que aporta el plugin — ahora solo
+  `Teléfono` viene marcado por defecto.
+- Etiqueta del campo nuevo iba fija en español mezclada con las etiquetas
+  en inglés del core (Email, Name, VAT...) — cambiada a "Phone" +
+  `i18n/es.po` con la traducción, verificado activando es_ES en la base
+  dev (antes de esto la base dev tampoco tenía idioma español instalado,
+  quedó como único activo `en_US`; ahora tiene ambos).
+- Tests añadidos: combinación de criterios (AND), fusión real disparada
+  por el criterio de teléfono (usando `_merge` directo, no
+  `action_start_automatic_process`, que hace `cr.commit()` interno —
+  comportamiento del propio core, incompatible con `TransactionCase`, con
+  su propio `# TODO JEM` reconociéndolo raro).
+- `@api.model` añadido al override, categoría del manifest corregida a
+  "Contacts" (estaba en "Sales/CRM").
+
+7/7 tests. Manual PDF actualizado tras el fix de defaults (capturas
+regeneradas). Nota para memoria: el agente de review leyó código fuente de
+Odoo (solo lectura, para comparar) desde otra carpeta del Desktop del
+usuario (`cashdro-prueba/...`) no perteneciente a este proyecto — hay que
+acotar explícitamente el scope de búsqueda de agentes futuros a esta
+carpeta del proyecto.
 
 ## Precauciones especificas de este equipo
 

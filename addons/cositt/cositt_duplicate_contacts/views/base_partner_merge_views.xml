@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="base_partner_merge_automatic_wizard_form_inherit" model="ir.ui.view">
+        <field name="name">base.partner.merge.automatic.wizard.form.inherit.cositt</field>
+        <field name="model">base.partner.merge.automatic.wizard</field>
+        <field name="inherit_id" ref="base.base_partner_merge_automatic_wizard_form"/>
+        <field name="arch" type="xml">
+            <field name="group_by_parent_id" position="after">
+                <field name="group_by_phone_sanitized"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="action_cositt_duplicate_contacts" model="ir.actions.act_window">
+        <field name="name">Detectar contactos duplicados</field>
+        <field name="res_model">base.partner.merge.automatic.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <!-- Solo teléfono por defecto: si se marcara también email, el
+             asistente exige coincidir en AMBOS a la vez (comportamiento
+             nativo de Odoo), lo que ocultaría justo el caso que este
+             módulo añade (duplicados que solo comparten teléfono). -->
+        <field name="context">{
+            'active_test': False,
+            'default_group_by_phone_sanitized': True,
+        }</field>
+    </record>
+
+    <menuitem id="menu_cositt_duplicate_contacts"
+              name="Detectar duplicados"
+              parent="contacts.menu_contacts"
+              action="action_cositt_duplicate_contacts"
+              sequence="60"/>
+
+</odoo>
