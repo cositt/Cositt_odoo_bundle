@@ -213,3 +213,47 @@ confunden con "campo vacío"; `{parent_id}` sin subcampo ahora usa
 valor 0 legítimo, reactivar regla archivada). Validado en navegador real:
 regla en Contactos + subida por chatter → `Contacto_Pedro_Sánchez.pdf`
 verificado directo en BD. Regla de prueba borrada después (dev limpio).
+
+## ⚠️ Problema de entorno detectado: Enterprise/Community desincronizados
+
+Al intentar instalar `base_iban` (que depende de `account`), Odoo
+auto-instala `account_accountant` (Enterprise, `auto_install: True`) y
+**revienta**: `ImportError: cannot import name '_ignore_tax_lock_date'
+from odoo.addons.account.models.account_move_line`. Es un desfase de
+versión entre el zip Enterprise (fechado 2026-09-10) y el Community que
+trae la imagen `odoo:19.0` de Docker Hub. `account` quedó instalado (no
+se pudo revertir solo desinstalando), y esto dejó una columna
+`autopost_bills` en `res_partner` con NOT NULL sin default (corregido a
+mano vía SQL, ver Plugin 05 abajo).
+
+**Esto bloqueará cualquier plugin futuro que dependa de `account`**
+(facturación/contabilidad). Antes de tocar esa área, hay que decidir con
+el usuario: fijar una versión concreta de la imagen `odoo:19.0` que
+case con este zip Enterprise, o pedir un zip Enterprise de otra fecha.
+No lo he investigado más a fondo — pendiente de decisión, no de código.
+
+## Plugin 05 — cositt_iban_validator (cerrado)
+
+Por el problema de arriba, **no usa el `base_iban` oficial de Odoo**
+(exigiría `account`). Implementación propia sobre `res.partner.bank`
+(vive en `base`, no en `account`): regex de formato + tabla de longitud
+por país (SEPA) + checksum ISO 7064 MOD-97-10, todo en funciones puras
+sin ORM (`models/iban_validator.py`), enganchado vía
+`@api.constrains("acc_number")`.
+
+Review encontró 1 HIGH real y sutil: el regex `\d` sin `re.ASCII` acepta
+dígitos Unicode no-ASCII (arábigo-índicos, etc.) que `int(ch, 36)`
+normaliza en silencio — un IBAN con esos caracteres pasaba la validación
+como si fuera correcto. Fix de una línea (`re.ASCII` en el regex) + test
+de regresión.
+
+Efecto colateral de este plugin: al reinstalar tras el fix, salió a la
+luz el problema de `autopost_bills` (NOT NULL sin default) que había
+dejado el incidente de `account_accountant` — bloqueaba crear CUALQUIER
+`res.partner`. Corregido a mano con `ALTER TABLE ... SET DEFAULT 'ask'`
+(valor del propio Selection de Odoo). Es un parche de entorno dev, no
+parte del módulo.
+
+13 tests. Validado en navegador real: IBAN con dígito de control
+incorrecto (`ES9121000418450200051333`) rechazado con el mensaje exacto
+del validador, confirmado en el log del servidor.
