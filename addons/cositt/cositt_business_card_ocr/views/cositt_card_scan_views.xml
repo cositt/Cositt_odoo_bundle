@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_cositt_card_scan_form" model="ir.ui.view">
+        <field name="name">cositt.card.scan.form</field>
+        <field name="model">cositt.card.scan</field>
+        <field name="arch" type="xml">
+            <form string="Escanear tarjeta de visita">
+                <header>
+                    <button name="action_scan" type="object" string="Extraer datos"
+                            class="oe_highlight" invisible="state != 'draft'"/>
+                    <button name="action_link_existing" type="object"
+                            string="Vincular a contacto existente"
+                            invisible="state != 'scanned' or not duplicate_partner_id"/>
+                    <button name="action_confirm" type="object" string="Crear contacto"
+                            class="oe_highlight" invisible="state not in ('scanned',)"/>
+                    <button name="action_discard" type="object" string="Descartar"
+                            invisible="state in ('done', 'discarded')"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,scanned,done"/>
+                </header>
+                <sheet>
+                    <div class="alert alert-info" role="alert"
+                         invisible="state != 'scanned' or not duplicate_partner_id">
+                        Posible contacto ya existente: <field name="duplicate_partner_id" readonly="1"/>.
+                        Revisa antes de crear uno nuevo.
+                    </div>
+                    <group>
+                        <group>
+                            <field name="image" widget="image" class="oe_avatar"
+                                   filename="image_filename"/>
+                            <field name="image_filename" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="partner_name"/>
+                            <field name="function"/>
+                            <field name="company_name"/>
+                            <field name="email"/>
+                            <field name="phone"/>
+                            <field name="mobile"/>
+                            <field name="website"/>
+                            <field name="street"/>
+                            <field name="parent_partner_id"/>
+                            <field name="partner_id" readonly="1" invisible="not partner_id"/>
+                        </group>
+                    </group>
+                    <group string="Texto detectado (OCR)">
+                        <field name="raw_text" nolabel="1" readonly="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_cositt_card_scan_list" model="ir.ui.view">
+        <field name="name">cositt.card.scan.list</field>
+        <field name="model">cositt.card.scan</field>
+        <field name="arch" type="xml">
+            <list string="Escaneos de tarjetas">
+                <field name="name"/>
+                <field name="partner_name"/>
+                <field name="company_name"/>
+                <field name="email"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_cositt_card_scan" model="ir.actions.act_window">
+        <field name="name">Escanear tarjeta de visita</field>
+        <field name="res_model">cositt.card.scan</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_cositt_card_scan"
+              name="Escanear tarjeta"
+              parent="contacts.menu_contacts"
+              action="action_cositt_card_scan"
+              sequence="50"/>
+
+</odoo>

@@ -1,0 +1,29 @@
+# Secrets / env
+.env
+*.pem
+*.key
+*.crt
+
+# Odoo Enterprise (licensed, no subir a repo)
+enterprise/
+
+# Data / dumps / backups
+*.dump
+*.sql
+*.sql.gz
+*.zip
+backups/
+filestore/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
