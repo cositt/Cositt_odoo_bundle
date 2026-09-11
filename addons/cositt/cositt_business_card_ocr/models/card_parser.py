@@ -9,10 +9,10 @@ WEBSITE_RE = re.compile(
 MOBILE_KEYWORDS = ("mobile", "móvil", "movil", "cell", "cel.")
 PHONE_KEYWORDS = ("tel", "phone", "landline", "fijo")
 FAX_KEYWORDS = ("fax",)
-COMPANY_SUFFIXES = (
-    "s.l.", "sl", "s.a.", "sa", "s.l.u.", "s.a.u.", "s.coop",
-    "inc", "inc.", "llc", "ltd", "ltd.", "corp", "corp.", "gmbh", "group",
-)
+COMPANY_SUFFIX_TOKENS = {
+    "sl", "s.l", "sa", "s.a", "slu", "s.l.u", "sau", "s.a.u", "scoop",
+    "s.coop", "inc", "llc", "ltd", "corp", "gmbh", "group",
+}
 TITLE_KEYWORDS = (
     "director", "manager", "gerente", "ceo", "cto", "cfo", "coo",
     "responsable", "jefe", "head of", "sales", "ventas", "marketing",
@@ -26,6 +26,17 @@ def normalize_phone_digits(value: Union[str, bool]) -> str:
     formato (espacios, guiones, prefijo de país) con el que llegó del OCR."""
     digits = re.sub(r"\D", "", value or "")
     return digits[-9:] if len(digits) >= 9 else digits
+
+
+def _has_company_suffix(line: str) -> bool:
+    """True si la última palabra de la línea es un sufijo societario
+    (SL, SA, Inc, Ltd...). Se compara la palabra completa, no una subcadena,
+    para no confundir p.ej. "sa" con "responsable" o "casa"."""
+    tokens = line.strip().split()
+    if not tokens:
+        return False
+    last = tokens[-1].lower().rstrip(".")
+    return last in COMPANY_SUFFIX_TOKENS
 
 
 def _clean_lines(raw_text: str) -> List[str]:
@@ -104,7 +115,7 @@ def parse_card_text(raw_text: str) -> Dict[str, Union[str, bool]]:
     free_lines = [line for line in lines if line not in used_lines]
 
     for line in list(free_lines):
-        if any(k in line.lower() for k in COMPANY_SUFFIXES):
+        if _has_company_suffix(line):
             result["company_name"] = line
             free_lines.remove(line)
             break

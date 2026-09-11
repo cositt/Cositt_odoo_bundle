@@ -38,9 +38,28 @@ aprobada explícitamente por el usuario.
 Admin de la base de desarrollo: login `admin`, password `dev_admin_2026`
 (solo válido en `cositt_plugins_dev`, entorno local, no es un secreto real).
 
-Pendiente: revisión del código completa (no se ha pedido `code-reviewer`
-todavía) y decidir si el backlog del parser (afinar heurísticas de
-nombre/empresa) se aborda ahora o se deja para iterar con feedback real.
+**Code review completado y aplicado.** `code-reviewer` encontró 2 HIGH + 4
+MEDIUM + 2 LOW; se corrigieron todos los HIGH/MEDIUM: manejo de errores del
+OCR (excepción → `UserError` legible), detección de duplicados robusta (email
+case-insensitive, teléfono normalizado por dígitos vía `phone_sanitized`),
+guardas de estado contra doble confirmación, `image_filename` conectado en la
+vista, `external_dependencies` en el manifest, aislamiento por usuario vía
+`ir.rule` (cada uno ve solo sus escaneos; admins ven todos). 21 tests, 0 fallos.
+
+Además, durante la verificación manual en navegador (con una segunda tarjeta
+de ejemplo) apareció **otro bug real no detectado por el review ni por los
+tests mockeados**: el sufijo corto "sa" en `COMPANY_SUFFIXES` hacía falso
+positivo como subcadena dentro de "respon**sa**ble", clasificando mal un
+cargo como nombre de empresa. Corregido comparando la última palabra completa
+de la línea contra un set de sufijos, no una subcadena — moraleja: probar
+con datos reales variados, no solo con el primer ejemplo que "cuadra".
+
+**Manual PDF con capturas**: cada módulo debe incluir
+`docs/manual_usuario.pdf` (ver regla nueva en AGENTS.md) generado con
+capturas reales de Chrome sobre el propio entorno + Chrome headless
+`--print-to-pdf`. Ya hecho para este plugin.
+
+`git init` + primer commit ya realizados (commit `8129dbf`, rama `main`).
 
 ## Precauciones especificas de este equipo
 

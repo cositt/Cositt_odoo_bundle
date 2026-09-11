@@ -47,6 +47,11 @@ cositt_xxxxx/
 - README por módulo: qué hace, problema que resuelve, instalación, configuración,
   uso, dependencias, seguridad, compatibilidad, limitaciones.
 - Tests automatizados cuando el módulo tenga lógica funcional relevante.
+- Cada módulo debe entregar un **manual en PDF con capturas de pantalla reales**
+  del flujo de uso completo (`docs/manual_usuario.pdf` dentro del propio módulo,
+  enlazado desde su README). Se genera con capturas del navegador tomadas sobre
+  el propio entorno de desarrollo (no mockups), convertidas a PDF (p.ej. Chrome
+  headless `--print-to-pdf` sobre un HTML con las imágenes embebidas).
 
 ## Flujo de trabajo
 

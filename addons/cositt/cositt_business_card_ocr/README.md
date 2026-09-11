@@ -28,6 +28,8 @@ Ninguna. Funciona nada más instalar.
 
 ## Uso
 
+Manual con capturas de pantalla paso a paso: [`docs/manual_usuario.pdf`](./docs/manual_usuario.pdf).
+
 1. Contactos → Escanear tarjeta → Nuevo.
 2. Subir la foto de la tarjeta.
 3. Pulsar "Extraer datos" y revisar/corregir los campos.

@@ -51,3 +51,18 @@ class TestCardParser(BaseCase):
         result = parse_card_text(text)
         self.assertFalse(result["phone"])
         self.assertFalse(result["mobile"])
+
+    def test_job_title_containing_sa_substring_is_not_mistaken_for_company(self):
+        # Regresión: "responsable" contiene "sa" como subcadena ("respon-SA-ble"),
+        # lo que antes hacía que se clasificara como sufijo societario.
+        text = (
+            "Carlos Fernandez Ruiz\n"
+            "Responsable de Ventas\n"
+            "Talleres Fernandez SL\n"
+            "carlos@talleresfernandez.com"
+        )
+        result = parse_card_text(text)
+        self.assertEqual(result["company_name"], "Talleres Fernandez SL")
+        self.assertEqual(result["function"], "Responsable de Ventas")
+        self.assertEqual(result["partner_name"], "Carlos Fernandez Ruiz")
+        self.assertFalse(result["street"])
