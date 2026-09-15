@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_employee_form_inherit_document_expiry" model="ir.ui.view">
+        <field name="name">hr.employee.form.inherit.cositt.document.expiry</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <!-- Solo hay un <notebook> en esta vista base (verificado). -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Documents" name="cositt_documents">
+                    <field name="document_ids">
+                        <list editable="bottom">
+                            <field name="name"/>
+                            <field name="expiry_date"/>
+                            <field name="reminder_days_before"/>
+                            <field name="state" widget="badge"
+                                   decoration-danger="state == 'expired'"
+                                   decoration-warning="state == 'expiring_soon'"
+                                   decoration-success="state == 'valid'"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
