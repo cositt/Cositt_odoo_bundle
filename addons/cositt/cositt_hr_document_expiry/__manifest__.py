@@ -16,6 +16,7 @@ no tiene usuario, sin duplicar avisos ya abiertos.
     "depends": ["hr", "mail"],
     "data": [
         "security/ir.model.access.csv",
+        "security/hr_employee_document_security.xml",
         "views/hr_employee_views.xml",
         "data/ir_cron.xml",
     ],

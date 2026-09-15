@@ -7,12 +7,21 @@ from odoo.exceptions import ValidationError
 _logger = logging.getLogger(__name__)
 
 
+def _compute_alert_date_value(expiry_date, reminder_days_before):
+    """Único lugar donde se resta reminder_days_before a expiry_date —
+    reusado tanto por el campo almacenado como por la función de estado,
+    para que no puedan divergir con el tiempo."""
+    if not expiry_date:
+        return False
+    return expiry_date - timedelta(days=reminder_days_before or 0)
+
+
 def _document_expiry_state(expiry_date, reminder_days_before, today):
     """Función pura: decide el estado de un documento a partir de fechas
     ya planas, para poder testearla sin depender del reloj real."""
     if not expiry_date:
         return "valid"
-    alert_date = expiry_date - timedelta(days=reminder_days_before or 0)
+    alert_date = _compute_alert_date_value(expiry_date, reminder_days_before)
     if expiry_date < today:
         return "expired"
     if alert_date <= today:
@@ -27,6 +36,9 @@ class HrEmployeeDocument(models.Model):
 
     employee_id = fields.Many2one(
         "hr.employee", required=True, ondelete="cascade", index=True
+    )
+    company_id = fields.Many2one(
+        related="employee_id.company_id", store=True, index=True, readonly=True
     )
     name = fields.Char(required=True, help="E.g. DNI, work permit, driving licence")
     expiry_date = fields.Date(required=True)
@@ -48,12 +60,9 @@ class HrEmployeeDocument(models.Model):
     @api.depends("expiry_date", "reminder_days_before")
     def _compute_alert_date(self):
         for document in self:
-            if document.expiry_date:
-                document.alert_date = document.expiry_date - timedelta(
-                    days=document.reminder_days_before or 0
-                )
-            else:
-                document.alert_date = False
+            document.alert_date = _compute_alert_date_value(
+                document.expiry_date, document.reminder_days_before
+            )
 
     @api.depends("expiry_date", "reminder_days_before")
     def _compute_state(self):
@@ -78,6 +87,11 @@ class HrEmployeeDocument(models.Model):
 
     @api.model
     def _cron_check_expiring_documents(self):
+        # Solo mira actividades ABIERTAS (activity_ids no incluye las ya
+        # marcadas como hechas): si alguien completa el recordatorio sin
+        # renovar expiry_date, el cron del día siguiente crea uno nuevo.
+        # Es intencional — sigue avisando cada día mientras el documento
+        # no se renueve — no un descuido de idempotencia.
         today = fields.Date.context_today(self)
         todo_activity_type = self.env.ref("mail.mail_activity_data_todo")
         due_documents = self.search([("alert_date", "<=", today)])
@@ -100,16 +114,28 @@ class HrEmployeeDocument(models.Model):
                 )
                 continue
 
-            document.activity_schedule(
-                "mail.mail_activity_data_todo",
-                date_deadline=document.expiry_date,
-                summary=self.env._(
-                    "Document expiring: %(name)s (%(employee)s)",
-                    name=document.name,
-                    employee=document.employee_id.display_name,
-                ),
-                user_id=responsible.id,
-            )
+            try:
+                with self.env.cr.savepoint():
+                    document.activity_schedule(
+                        "mail.mail_activity_data_todo",
+                        date_deadline=document.expiry_date,
+                        summary=self.env._(
+                            "Document expiring: %(name)s (%(employee)s)",
+                            name=document.name,
+                            employee=document.employee_id.display_name,
+                        ),
+                        user_id=responsible.id,
+                    )
+            except Exception:
+                # Aislado con savepoint: un fallo en un documento no debe
+                # revertir los recordatorios ya creados para los demás en
+                # esta misma ejecución del cron.
+                _logger.exception(
+                    "No se pudo crear el recordatorio de caducidad del "
+                    "documento '%s' (id=%s).",
+                    document.name,
+                    document.id,
+                )
 
 
 class HrEmployee(models.Model):

@@ -6,8 +6,11 @@
         <field name="model">hr.employee</field>
         <field name="inherit_id" ref="hr.view_employee_form"/>
         <field name="arch" type="xml">
-            <!-- Solo hay un <notebook> en esta vista base (verificado). -->
-            <xpath expr="//notebook" position="inside">
+            <!-- Ancla a la última página nativa ("hr_settings"), como
+                 hacen otros módulos core (hr_org_chart, hr_skills) que
+                 también añaden páginas aquí, en vez del <notebook>
+                 genérico (más frágil ante colisiones de orden). -->
+            <xpath expr="//page[@name='hr_settings']" position="after">
                 <page string="Documents" name="cositt_documents">
                     <field name="document_ids">
                         <list editable="bottom">

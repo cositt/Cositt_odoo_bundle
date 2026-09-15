@@ -366,7 +366,69 @@ empezar esta sesión, sigue así.
 
 Backlog de ideas discutidas para próximos meses (no comprometidas a
 orden fijo): `cositt_project_task_aging` (badge de tareas estancadas en
-Proyecto), `cositt_hr_document_expiry` (caducidad de documentos en
-Empleados), `cositt_stock_low_alert` (aviso de stock mínimo en
+Proyecto), `cositt_stock_low_alert` (aviso de stock mínimo en
 Inventario), `cositt_maintenance_qr_asset` (QR de activo en
-Mantenimiento, mismo hallazgo de `qrcode` ya disponible que este plugin).
+Mantenimiento, mismo hallazgo de `qrcode` ya disponible que plugin 07).
+
+## Plugin 08 — cositt_hr_document_expiry (cerrado)
+
+Documentos de empleado con fecha de caducidad (DNI, permiso de trabajo,
+carné...) en nuevo modelo `hr.employee.document` (One2many desde
+`hr.employee`). Un cron diario crea una actividad "Por hacer" (reutiliza
+`mail.mail_activity_data_todo` del core, sin tipo de actividad nuevo)
+antes de que caduque, asignada al empleado o a su responsable directo si
+no tiene usuario; si ninguno tiene usuario, se registra un warning en el
+log y se salta ese documento sin romper el cron para los demás.
+
+**Hallazgo de entorno importante**: `hr` no estaba instalado en la base
+dev (nunca se había tocado la app Empleados en este proyecto) — al
+instalarlo arrastra `hr_skills` y `mail_bot_hr` como `auto_install`,
+ninguno depende de `account`, sin problema.
+
+**Otro hallazgo de entorno, más raro**: tras crear el directorio del
+módulo nuevo y hacer `-i` vía `docker compose exec` (proceso corto), el
+proceso PRINCIPAL de Odoo (el que sirve el puerto 8069, arrancado por
+`entrypoint.sh` al levantar el contenedor) falló con
+`ModuleNotFoundError: No module named 'odoo.addons.cositt_hr_document_expiry'`
+al intentar servir una petición — un `ls` desde otro `docker compose exec`
+mostraba los archivos perfectamente. No pasó con los plugins 06/07
+creados en la misma sesión. Causa más probable: caché de listado de
+directorio del propio proceso largo-vivo sobre el volumen bind-mounted
+(Docker Desktop/macOS), no relacionado con el código del módulo. Fix:
+`docker compose restart odoo`. Si un módulo nuevo da este error exacto en
+sesiones futuras, probar el restart antes de sospechar del código.
+
+**Code review**: 1 HIGH + 3 MEDIUM + 1 LOW. Corregidos:
+- HIGH: `hr.employee.document` no tenía `company_id` ni `ir.rule`, a
+  diferencia de `hr.employee` (que sí tiene una regla multi-compañía
+  nativa) — cualquier usuario con `hr.group_hr_user` podía leer/escribir
+  documentos (DNI, permiso de trabajo: PII sensible) de empleados de
+  OTRA compañía vía acceso técnico/API, aunque la navegación normal por
+  la ficha de empleado ya estuviera protegida. Añadido `company_id`
+  (related a `employee_id.company_id`, stored) + `ir.rule` multi-compañía
+  estándar en `security/hr_employee_document_security.xml`.
+- MEDIUM: el cálculo `expiry_date - reminder_days_before` estaba
+  duplicado en la función pura de estado y en el compute de
+  `alert_date` — mismo riesgo de divergencia futura que se vigila en
+  otros plugins. Extraído a un único helper `_compute_alert_date_value`.
+- MEDIUM: el cron no aislaba fallos por documento — un error creando la
+  actividad de uno habría revertido (por el commit único de `ir.cron` al
+  final) las ya creadas para los anteriores en la misma pasada. Cada
+  `activity_schedule` ahora va dentro de `self.env.cr.savepoint()`.
+- MEDIUM (documentado, no cambia código): la idempotencia del cron solo
+  mira actividades ABIERTAS — si alguien marca el recordatorio como
+  hecho sin renovar `expiry_date`, el cron del día siguiente crea uno
+  nuevo. Es el comportamiento deseado (seguir avisando hasta que se
+  renueve), ahora explícito en un comentario en el código.
+- LOW: el xpath de la vista anclaba a `//notebook` genérico — cambiado a
+  `//page[@name='hr_settings']` (última página nativa), igual que hacen
+  `hr_org_chart`/`hr_skills` al añadir páginas ahí.
+
+22 tests (arrancó en 20, +2 tras los fixes: `company_id` sigue al
+empleado, y un usuario de una compañía no ve documentos de otra).
+Validado en navegador real: empleada de prueba con documento "DNI" y
+fecha dentro de la ventana de aviso → badge "Expiring soon" correcto;
+cron ejecutado a mano dos veces sobre datos reales (una sin usuario
+vinculado, confirmando el warning + no-crash; el camino con usuario ya
+cubierto por los tests de integración). Registro de prueba borrado
+después, base dev limpia.

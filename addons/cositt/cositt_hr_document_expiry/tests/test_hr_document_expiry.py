@@ -93,6 +93,48 @@ class TestHrEmployeeDocumentModel(TransactionCase):
                 {"employee_id": self.employee.id, "name": "DNI"}
             )
 
+    def test_company_id_follows_employee(self):
+        doc = self.env["hr.employee.document"].create(
+            {
+                "employee_id": self.employee.id,
+                "name": "DNI",
+                "expiry_date": date(2026, 12, 31),
+            }
+        )
+        self.assertEqual(doc.company_id, self.employee.company_id)
+
+    def test_multi_company_rule_hides_other_company_documents(self):
+        # Regresión HIGH del review: sin ir.rule, un usuario con
+        # hr.group_hr_user podía leer documentos (DNI, permiso de
+        # trabajo...) de empleados de OTRA compañía.
+        other_company = self.env["res.company"].create({"name": "Otra Compañía"})
+        other_employee = self.env["hr.employee"].create(
+            {"name": "Empleado Otra Compañía", "company_id": other_company.id}
+        )
+        other_doc = self.env["hr.employee.document"].create(
+            {
+                "employee_id": other_employee.id,
+                "name": "DNI ajeno",
+                "expiry_date": date(2026, 12, 31),
+            }
+        )
+
+        hr_user = self.env["res.users"].create(
+            {
+                "name": "HR de la compañía principal",
+                "login": "hr_multicompany_test@example.com",
+                "group_ids": [(4, self.env.ref("hr.group_hr_user").id)],
+                "company_ids": [(6, 0, [self.env.company.id])],
+                "company_id": self.env.company.id,
+            }
+        )
+        found = (
+            self.env["hr.employee.document"]
+            .with_user(hr_user)
+            .search([("id", "=", other_doc.id)])
+        )
+        self.assertFalse(found)
+
     def test_archiving_keeps_record_but_hides_from_default_search(self):
         doc = self.env["hr.employee.document"].create(
             {
