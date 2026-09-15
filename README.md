@@ -5,7 +5,7 @@ uno por mes. Prefijo técnico: `cositt_`.
 
 Entorno **exclusivamente de desarrollo local**. Nunca producción, nunca datos de clientes.
 
-## Progreso: 8 / 12
+## Progreso: 9 / 12
 
 | # | Módulo | Qué hace |
 |---|--------|----------|
@@ -17,6 +17,7 @@ Entorno **exclusivamente de desarrollo local**. Nunca producción, nunca datos d
 | 06 | [`cositt_email_domain_helper`](./addons/cositt/cositt_email_domain_helper) | Vincula contactos a su empresa por dominio de email; detecta dominios duplicados |
 | 07 | [`cositt_contact_qr_vcard`](./addons/cositt/cositt_contact_qr_vcard) | QR con vCard del contacto para compartir tarjeta digital |
 | 08 | [`cositt_hr_document_expiry`](./addons/cositt/cositt_hr_document_expiry) | Documentos de empleado con fecha de caducidad + recordatorio automático |
+| 09 | [`cositt_stock_low_alert`](./addons/cositt/cositt_stock_low_alert) | Aviso de stock mínimo por producto, sin reglas de reabastecimiento |
 
 Cada módulo es independiente (`__manifest__.py` propio) e instalable por
 separado — el mono-repo no implica instalarlos todos juntos. Detalle de
