@@ -257,3 +257,46 @@ parte del módulo.
 13 tests. Validado en navegador real: IBAN con dígito de control
 incorrecto (`ES9121000418450200051333`) rechazado con el mensaje exacto
 del validador, confirmado en el log del servidor.
+
+## Plugin 06 — cositt_email_domain_helper (cerrado)
+
+Calcula `email_domain` (campo computado+almacenado en `res.partner`, vía
+`odoo.tools.email_domain_extract` del core) y ofrece: botón en la ficha
+de una persona para vincularla a la empresa existente con el mismo
+dominio (excluye proveedores de email genéricos vía lista hardcodeada
+`FREE_EMAIL_DOMAINS`), y menú "Dominios de email duplicados" en
+Contactos con vista agrupada por dominio para detectar empresas
+duplicadas. Sin modelo nuevo, sin ACL nueva (usa permisos nativos de
+`res.partner`), sin dependencias externas.
+
+Review: 0 HIGH, 2 MEDIUM, 2 LOW. Corregidos:
+- Labels de UI (campo, botón, acción, menú) estaban fijos en español
+  mezclados con las etiquetas en inglés del core (mismo patrón que
+  plugin 02) — cambiados a inglés + `i18n/es.po` con traducción,
+  exportado con `odoo i18n export` (nota de entorno: ese comando avisa
+  "Ignoring not found languages: es_ES" aunque el idioma sí está activo,
+  por un detalle del core que compara contra `iso_code` en vez de
+  `code` — falso positivo, el .po se exporta igual).
+- Faltaba `docs/manual_usuario.pdf` (el README ya enlazaba a un archivo
+  inexistente).
+- 1 LOW del review era falso positivo: pedía un test de "ya vinculado a
+  la única empresa correcta, reintentar", pero `test_already_linked_raises`
+  ya cubría exactamente ese caso — no se duplicó.
+- Mensaje de error de "sin dominio" matizado para cubrir también el caso
+  de email con formato no parseable (varias direcciones), no solo email
+  vacío.
+
+15 tests. Validado en navegador real con datos reales ya existentes en
+la base dev: "Innova Digital SL" e "Innova Digital Sucursal Norte"
+comparten dominio `innovadigital.es` — el botón detecta la ambigüedad y
+no adivina; la vista agrupada muestra el grupo `innovadigital.es (2)`
+correctamente. También probado el camino de vinculación única con una
+empresa+contacto de prueba (creados y borrados después, sin dejar rastro
+en la base dev).
+
+Nota de entorno para sesiones futuras: `docker compose exec odoo odoo ...`
+no pasa por el `entrypoint.sh` de la imagen oficial, así que no traduce
+las variables `HOST`/`USER`/`PASSWORD` del compose a `--db_host` etc.
+Hace falta pasarlos explícitos (`--db_host=db --db_user=... --db_password=...`)
+y añadir `server --http-port=8070` (o `--no-http` si no hace falta UI)
+para no chocar con el puerto 8069 del proceso principal ya corriendo.

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_partner_form_inherit_email_domain_helper" model="ir.ui.view">
+        <field name="name">res.partner.form.inherit.cositt.email.domain.helper</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+            <!-- El campo "email" aparece más de una vez en esta vista (la
+                 cabecera principal y, más abajo, la plantilla de personas de
+                 contacto de una empresa dentro del <notebook>). Se ancla a
+                 div.mb8 (contenedor único de la cabecera), igual que hace
+                 cositt_quick_whatsapp con el teléfono. -->
+            <xpath expr="(//div[hasclass('mb8')]//field[@name='email'])[1]" position="after">
+                <button name="action_find_company_by_domain" type="object"
+                        icon="fa-building"
+                        class="btn btn-link p-0 ms-1"
+                        title="Find company by email domain"
+                        invisible="is_company or not email"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="res_partner_search_email_domain_duplicates" model="ir.ui.view">
+        <field name="name">res.partner.search.cositt.email.domain.duplicates</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="email_domain"/>
+                <filter name="group_by_email_domain" string="Email domain"
+                        context="{'group_by': 'email_domain'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_cositt_email_domain_duplicates" model="ir.actions.act_window">
+        <field name="name">Duplicate email domains</field>
+        <field name="res_model">res.partner</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="res_partner_search_email_domain_duplicates"/>
+        <!-- Empresas con dominio de email conocido: agrupadas, las que
+             comparten dominio aparecen en el mismo grupo con su recuento,
+             señal visual de posible duplicado. -->
+        <field name="domain">[('is_company', '=', True), ('email_domain', '!=', False)]</field>
+        <field name="context">{'search_default_group_by_email_domain': 1}</field>
+    </record>
+
+    <menuitem id="menu_cositt_email_domain_duplicates"
+              name="Duplicate email domains"
+              parent="contacts.menu_contacts"
+              action="action_cositt_email_domain_duplicates"
+              sequence="61"/>
+
+</odoo>
