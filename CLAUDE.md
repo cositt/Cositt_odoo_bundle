@@ -300,3 +300,73 @@ las variables `HOST`/`USER`/`PASSWORD` del compose a `--db_host` etc.
 Hace falta pasarlos explícitos (`--db_host=db --db_user=... --db_password=...`)
 y añadir `server --http-port=8070` (o `--no-http` si no hace falta UI)
 para no chocar con el puerto 8069 del proceso principal ya corriendo.
+
+## Plugin 07 — cositt_contact_qr_vcard (cerrado)
+
+Pestaña "Digital Card" en la ficha de contacto con un código QR generado
+localmente (nombre, empresa, cargo, teléfono, email, dirección, web en
+formato vCard 3.0). Campo `qr_vcard` (Binary, computado, `store=False`)
+en `res.partner`, sin modelo nuevo, sin ACL nueva.
+
+**Hallazgo de entorno importante**: la librería Python `qrcode` ya viene
+incluida en la imagen oficial `odoo:19.0` (la usa el propio core para el
+QR de `auth_totp` y otros módulos) — no hizo falta tocar el Dockerfile ni
+pedir confirmación de dependencia nueva. Verificado con
+`docker compose exec odoo python3 -c "import qrcode"` antes de empezar.
+Aplica a cualquier plugin futuro que necesite generar QR.
+
+Sobre cómo generar el `i18n/es.po` desde el CLI en Odoo 19: el comando ya
+no es `--i18n-export` (ese flag ya no existe), es el subcomando
+`odoo i18n export -d <db> <modulo> -l es_ES`. Ese subcomando tampoco lee
+`--db_host`/`--db_user`/`--db_password` ni la config montada en
+`/etc/odoo/odoo.conf` (que no trae credenciales de base de datos, solo
+`addons_path` — las credenciales las inyecta el `entrypoint.sh` oficial
+vía variables `PG*`, que `docker compose exec` no ejecuta). Hace falta
+pasar `-e PGHOST=db -e PGUSER=... -e PGPASSWORD=...` al propio
+`docker compose exec` para que psycopg2 los recoja.
+
+**Code review**: 2 HIGH + 3 MEDIUM + 3 LOW, HIGH y MEDIUM corregidos:
+- El `try/except` que protegía la generación del QR envolvía solo
+  `_generate_qr_png`, no la construcción de la vCard (que lee
+  `country_id.name`, antes `parent_id.name`) — un `AccessError` ahí
+  habría roto la carga del formulario de contacto para todo el sistema,
+  justo lo que el propio comentario del código decía evitar. Ahora el
+  `try/except` envuelve ambos pasos dentro de `_compute_qr_vcard`.
+- El escapado RFC 6350 solo cubría `\n`, no un `\r` suelto (sin pareja
+  `\n`) ni `\r\n` — quedaba como carácter de control real en la vCard, y
+  varios lectores lo tratan igual que un salto de línea, lo que
+  permitiría inyectar una propiedad falsa (otro TEL/EMAIL) a través de un
+  campo de texto libre como el nombre. Corregido normalizando cualquier
+  variante de salto de línea a `\n` antes de escapar.
+- La dirección (ADR) exigía `street` para incluirse, perdiendo
+  ciudad/país si solo faltaba la calle — ahora se incluye si hay
+  cualquier componente de dirección. Se aprovechó para añadir `street2`
+  como "extended address" del vCard.
+- El ORG de una persona solo miraba `parent_id.name` (empresa vinculada
+  por registro), ignorando el caso de "Company Name" como texto libre sin
+  empresa vinculada — cambiado a `commercial_company_name` (campo nativo
+  de Odoo que cubre ambos casos), y la dependencia del campo computado
+  actualizada de `parent_id.name` a `commercial_company_name`.
+- Añadido comentario de advertencia junto al campo: no-stored, pensado
+  para el formulario (un registro), no para listas/kanban/export masivo.
+
+29 tests (arrancó en 23, +6 tras los fixes del review). Validado en
+navegador real: QR visible y legible en la ficha de "Pedro Sánchez" y de
+"Maria Lopez Fernandez" (con empresa, cargo, teléfono y web reales de la
+base dev). Probado también el caso límite de la vCard con un contacto
+nuevo sin guardar cuyo nombre incluía coma, punto y coma y backslash a la
+vez (`Perez, Juan; Test\Backslash`) — sin traceback, escapado correcto en
+integración real, no solo en el test unitario. Registro de prueba
+descartado sin guardar, base dev sin rastro. Manual PDF generado con
+capturas reales de este mismo flujo.
+
+Pendiente de commit (no se hace commit salvo petición explícita) —
+Plugin 06 (`cositt_email_domain_helper`) tampoco estaba comiteado al
+empezar esta sesión, sigue así.
+
+Backlog de ideas discutidas para próximos meses (no comprometidas a
+orden fijo): `cositt_project_task_aging` (badge de tareas estancadas en
+Proyecto), `cositt_hr_document_expiry` (caducidad de documentos en
+Empleados), `cositt_stock_low_alert` (aviso de stock mínimo en
+Inventario), `cositt_maintenance_qr_asset` (QR de activo en
+Mantenimiento, mismo hallazgo de `qrcode` ya disponible que este plugin).
