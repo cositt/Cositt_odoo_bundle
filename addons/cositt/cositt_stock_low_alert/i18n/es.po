@@ -1,0 +1,71 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* cositt_stock_low_alert
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 19.0+e-20260810\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-09-15 12:25+0000\n"
+"PO-Revision-Date: 2026-09-15 12:25+0000\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: cositt_stock_low_alert
+#: model:ir.model.fields,help:cositt_stock_low_alert.field_product_product__low_stock_threshold
+#: model:ir.model.fields,help:cositt_stock_low_alert.field_product_template__low_stock_threshold
+msgid ""
+"Cantidad disponible a partir de la cual se avisa de stock bajo. 0 desactiva "
+"el aviso para este producto. En productos con variantes, se compara contra "
+"el stock combinado de todas ellas, no de una variante concreta."
+msgstr ""
+"Cantidad disponible a partir de la cual se avisa de stock bajo. 0 desactiva "
+"el aviso para este producto. En productos con variantes, se compara contra "
+"el stock combinado de todas ellas, no de una variante concreta."
+
+#. module: cositt_stock_low_alert
+#: model:ir.actions.server,name:cositt_stock_low_alert.ir_cron_check_low_stock_ir_actions_server
+msgid "Cositt: Check low stock"
+msgstr "Cositt: Comprobar stock bajo"
+
+#. module: cositt_stock_low_alert
+#: model:ir.model.fields,field_description:cositt_stock_low_alert.field_product_template__display_name
+msgid "Display Name"
+msgstr "Nombre para mostrar"
+
+#. module: cositt_stock_low_alert
+#: model:ir.model.fields,field_description:cositt_stock_low_alert.field_product_template__id
+msgid "ID"
+msgstr ""
+
+#. module: cositt_stock_low_alert
+#: model:ir.model.fields,field_description:cositt_stock_low_alert.field_product_product__is_low_stock
+#: model:ir.model.fields,field_description:cositt_stock_low_alert.field_product_template__is_low_stock
+msgid "Is Low Stock"
+msgstr "Stock bajo"
+
+#. module: cositt_stock_low_alert
+#: model:mail.activity.type,name:cositt_stock_low_alert.mail_activity_type_low_stock_alert
+msgid "Low Stock Alert"
+msgstr "Aviso de stock bajo"
+
+#. module: cositt_stock_low_alert
+#: model:ir.model.fields,field_description:cositt_stock_low_alert.field_product_product__low_stock_threshold
+#: model:ir.model.fields,field_description:cositt_stock_low_alert.field_product_template__low_stock_threshold
+msgid "Low Stock Threshold"
+msgstr "Umbral de stock bajo"
+
+#. module: cositt_stock_low_alert
+#. odoo-python
+#: code:addons/cositt_stock_low_alert/models/product_template.py:0
+msgid "Low stock: %(name)s (%(qty)s available, threshold %(threshold)s)"
+msgstr "Stock bajo: %(name)s (%(qty)s disponibles, umbral %(threshold)s)"
+
+#. module: cositt_stock_low_alert
+#: model:ir.model,name:cositt_stock_low_alert.model_product_template
+msgid "Product"
+msgstr "Producto"

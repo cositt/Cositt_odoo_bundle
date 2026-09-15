@@ -432,3 +432,68 @@ cron ejecutado a mano dos veces sobre datos reales (una sin usuario
 vinculado, confirmando el warning + no-crash; el camino con usuario ya
 cubierto por los tests de integración). Registro de prueba borrado
 después, base dev limpia.
+
+## Plugin 09 — cositt_stock_low_alert (cerrado)
+
+Umbral de stock mínimo por producto (`low_stock_threshold` en
+`product.template`) + `is_low_stock` computado. Cron diario crea un
+aviso cuando el stock cae al umbral o por debajo, asignado al
+`responsible_id` **nativo** de `stock` (reutilizado a propósito, no se
+añadió campo de responsable propio). Complementa, no sustituye, a las
+Reordering Rules nativas (`stock.warehouse.orderpoint`), que exigen
+ruta de compra/fabricación configurada — este plugin es solo un aviso.
+
+**Descarte de plugin evitado**: la idea original del mes ("aging" de
+tareas estancadas en Proyecto) resultó ser una función YA NATIVA de
+Odoo 19 (`mail.tracking.duration.mixin`, campos `is_rotting`/
+`rotting_days`, widget `rotting` ya cableado en el kanban de
+`project.task`) — simplemente apagada por defecto
+(`rotting_threshold_days = 0` en todas las etapas). Se descartó ese
+plugin por sería puro duplicado, y se pasó a "alerta de stock mínimo"
+del backlog. Lección: investigar SIEMPRE si el core ya resuelve la idea
+antes de escribir código — casi se repite el trabajo de Odoo.
+
+**Bug de vista real encontrado y corregido durante el desarrollo**: un
+`<group>` HERMANO nuevo añadido al final de `<page name="inventory">`
+nunca se pintaba en el navegador, aunque el servidor devolvía el campo
+correctamente en el arch (verificado con RPC directo) — la página tiene
+un layout de 2 columnas con 2 `<group>` esperados. Un segundo intento
+con xpath posicional (`group[1]`) funcionó por casualidad pero es
+frágil. Fix final: anclar a `group[@name='group_lots_and_weight']`
+(nombre fijo, siempre presente para productos Goods), igual que hace el
+propio `stock` en tres xpaths distintos sobre esa vista.
+
+**Code review**: 2 HIGH + 1 MEDIUM + 3 LOW. Corregidos:
+- HIGH: el chequeo "ya avisado" del cron miraba CUALQUIER actividad
+  To-Do abierta en el producto, no una creada por este plugin —
+  `product.template` es un modelo de uso muy común donde cualquiera
+  puede tener ya un To-Do por un motivo ajeno (ej. "llamar al
+  proveedor"), lo que silenciaba el aviso real de stock bajo para
+  siempre, sin loguear nada. Fix: tipo de actividad propio
+  ("Low Stock Alert", `data/mail_activity_type.xml`, con
+  `res_model='product.template'`) en vez de reutilizar el "To-Do"
+  genérico del core.
+- HIGH: `responsible_id` es `company_dependent` y el cron corre con el
+  contexto de una sola compañía (la del usuario del `ir.cron`) — un
+  producto compartido entre compañías (`company_id=False`) podía
+  resolver el responsable de la compañía equivocada. Fix: forzar
+  `product.with_company(product.company_id or self.env.company)`
+  explícitamente antes de leer `responsible_id`; si el producto no
+  tiene `company_id` propio, se registra un warning explícito en vez de
+  fallar en silencio (caso límite documentado, no resuelto del todo —
+  ver README).
+- MEDIUM: el `help` de `low_stock_threshold` no avisaba de que en
+  productos con variantes el umbral compara contra el stock combinado
+  de todas ellas, no de una variante concreta — añadido al help text.
+- LOW: limpieza de condición redundante en `_is_low_stock`, quitado
+  `widget="boolean_toggle"` de un campo readonly (sugería
+  interactividad que no tiene), formato de cantidad en el summary del
+  aviso (`%(qty)s` con `:g` para no mostrar "3.0").
+
+17 tests (arrancó en 15, +2 tras los fixes: un To-Do ajeno no bloquea
+el aviso real, y un producto con `company_id` propio resuelve bien el
+responsable). Validado en navegador real: producto de prueba con
+umbral 10 y stock 0 → "Is Low Stock" se activa al momento (onchange en
+vivo); cron ejecutado a mano sobre datos reales → actividad "Low stock:
+Producto Test Stock (0.0 available, threshold 10.0)" creada y asignada
+correctamente. Registro de prueba borrado después.

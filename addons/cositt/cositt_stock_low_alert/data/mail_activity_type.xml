@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Tipo de actividad propio en vez de reutilizar el "To-Do" genérico:
+         product.template es un modelo de uso muy común donde cualquiera
+         puede tener ya un To-Do abierto por un motivo ajeno al stock (ej.
+         "llamar al proveedor"). Si el cron reutilizara ese tipo genérico
+         para su chequeo de "ya avisado", un To-Do ajeno preexistente
+         silenciaría el aviso real de stock bajo para siempre. -->
+    <record id="mail_activity_type_low_stock_alert" model="mail.activity.type">
+        <field name="name">Low Stock Alert</field>
+        <field name="category">default</field>
+        <field name="icon">fa-cubes</field>
+        <field name="res_model">product.template</field>
+    </record>
+
+</odoo>
