@@ -5,6 +5,23 @@ uno por mes. Prefijo técnico: `cositt_`.
 
 Entorno **exclusivamente de desarrollo local**. Nunca producción, nunca datos de clientes.
 
+## Progreso: 7 / 12
+
+| # | Módulo | Qué hace |
+|---|--------|----------|
+| 01 | [`cositt_business_card_ocr`](./addons/cositt/cositt_business_card_ocr) | OCR local (Tesseract) de tarjetas de visita → alta de contacto |
+| 02 | [`cositt_duplicate_contacts`](./addons/cositt/cositt_duplicate_contacts) | Detección de duplicados por teléfono, sobre el wizard nativo de fusión |
+| 03 | [`cositt_quick_whatsapp`](./addons/cositt/cositt_quick_whatsapp) | Botón para abrir WhatsApp (wa.me) desde la ficha de contacto |
+| 04 | [`cositt_smart_attachment_name`](./addons/cositt/cositt_smart_attachment_name) | Reglas de renombrado automático de adjuntos |
+| 05 | [`cositt_iban_validator`](./addons/cositt/cositt_iban_validator) | Validación de IBAN (formato + checksum) sin depender de `account` |
+| 06 | [`cositt_email_domain_helper`](./addons/cositt/cositt_email_domain_helper) | Vincula contactos a su empresa por dominio de email; detecta dominios duplicados |
+| 07 | [`cositt_contact_qr_vcard`](./addons/cositt/cositt_contact_qr_vcard) | QR con vCard del contacto para compartir tarjeta digital |
+
+Cada módulo es independiente (`__manifest__.py` propio) e instalable por
+separado — el mono-repo no implica instalarlos todos juntos. Detalle de
+cada uno, decisiones de arquitectura y hallazgos de cada ronda de review
+en [CLAUDE.md](./CLAUDE.md).
+
 ## Stack
 
 - Odoo **19.0** (Community vía imagen oficial `odoo:19.0` + Enterprise montado como volumen)
