@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_cositt_attachment_zip_wizard_form" model="ir.ui.view">
+        <field name="name">cositt.attachment.zip.wizard.form</field>
+        <field name="model">cositt.attachment.zip.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Descargar adjuntos (ZIP)">
+                <field name="state" invisible="1"/>
+
+                <group invisible="state != 'select'">
+                    <field name="attachment_ids" nolabel="1" readonly="1" widget="many2many_tags"/>
+                    <field name="attachment_count" string="Adjuntos"/>
+                    <field name="record_count" string="Registros de origen"/>
+                    <field name="total_size_display" string="Tamaño total"/>
+                    <field name="zip_filename"/>
+                </group>
+
+                <group invisible="state != 'done'">
+                    <field name="zip_filename" invisible="1"/>
+                    <field name="zip_file" filename="zip_filename" readonly="1"/>
+                </group>
+
+                <footer>
+                    <button
+                        string="Generar ZIP"
+                        type="object"
+                        name="action_generate_zip"
+                        class="btn-primary"
+                        invisible="state != 'select'"
+                    />
+                    <button
+                        string="Cancelar"
+                        special="cancel"
+                        invisible="state != 'select'"
+                    />
+                    <button
+                        string="Cerrar"
+                        special="cancel"
+                        class="btn-primary"
+                        invisible="state != 'done'"
+                    />
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

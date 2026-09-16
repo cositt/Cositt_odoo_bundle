@@ -30,7 +30,7 @@ de 12. En curso — orden secuencial (13 → 14 → 15 → 16 → 17).
 | # | Módulo | Descripción | Estado |
 |---|--------|-------------|--------|
 | 13 | [`cositt_mass_edit`](./addons/cositt/cositt_mass_edit) | Edición masiva controlada de registros | Listo |
-| 14 | `cositt_attachment_zip` | Descarga de adjuntos en ZIP | Pendiente |
+| 14 | [`cositt_attachment_zip`](./addons/cositt/cositt_attachment_zip) | Descarga de adjuntos en ZIP | Listo |
 | 15 | `cositt_chatter_search` | Buscador y filtros dentro del chatter | Pendiente |
 | 16 | `cositt_attachment_lock` | Protección contra eliminación de adjuntos | Pendiente |
 | 17 | `cositt_list_preferences` | Preferencias persistentes de vistas de lista | Pendiente |

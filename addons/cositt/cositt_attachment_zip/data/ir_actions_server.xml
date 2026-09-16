@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Enganchada a ir.attachment (no a sale/account/project/...) para que
+        funcione igual con los adjuntos de cualquier modelo, sin añadir
+        dependencias funcionales. Aparece en el menú "Acción" al
+        multi-seleccionar adjuntos, p.ej. en Ajustes > Técnico > Adjuntos.
+    -->
+    <record id="action_cositt_attachment_zip_wizard" model="ir.actions.server">
+        <field name="name">Descargar adjuntos (ZIP)</field>
+        <field name="model_id" ref="base.model_ir_attachment"/>
+        <field name="binding_model_id" ref="base.model_ir_attachment"/>
+        <field name="binding_view_types">list,kanban</field>
+        <field name="state">code</field>
+        <field name="code">action = records.cositt_action_open_attachment_zip_wizard()</field>
+    </record>
+</odoo>
