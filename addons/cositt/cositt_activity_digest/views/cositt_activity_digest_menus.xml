@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Reutiliza la acción nativa "My Activities" (mail.mail_activity_action_my)
+        tal cual: ya trae lista/kanban/calendario y los filtros de
+        "Vencidas/Hoy/Mañana/Esta semana" por defecto. Solo le falta un
+        menú normal — hoy solo la usa el widget del reloj y Ctrl+K.
+    -->
+    <menuitem
+        id="menu_cositt_activity_digest_root"
+        name="Mis Actividades"
+        action="mail.mail_activity_action_my"
+        sequence="25"
+        web_icon="mail,static/description/icon.png"
+    />
+
+</odoo>

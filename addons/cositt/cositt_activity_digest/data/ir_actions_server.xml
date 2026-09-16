@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Enganchada a mail.activity (no a cada modelo de negocio): aparece
+        en el menú "Acción" al multi-seleccionar actividades en la vista
+        "Mis Actividades" (o en cualquier otra lista de mail.activity,
+        incluida la de Ajustes > Técnico).
+    -->
+    <record id="action_cositt_activity_postpone_wizard" model="ir.actions.server">
+        <field name="name">Posponer</field>
+        <field name="model_id" ref="mail.model_mail_activity"/>
+        <field name="binding_model_id" ref="mail.model_mail_activity"/>
+        <field name="binding_view_types">list</field>
+        <field name="state">code</field>
+        <field name="code">action = records.cositt_action_open_postpone_wizard()</field>
+    </record>
+</odoo>
