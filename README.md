@@ -5,7 +5,7 @@ uno por mes. Prefijo técnico: `cositt_`.
 
 Entorno **exclusivamente de desarrollo local**. Nunca producción, nunca datos de clientes.
 
-## Progreso: 10 / 12
+## Progreso: 11 / 12
 
 | # | Módulo | Qué hace |
 |---|--------|----------|
@@ -19,6 +19,7 @@ Entorno **exclusivamente de desarrollo local**. Nunca producción, nunca datos d
 | 08 | [`cositt_hr_document_expiry`](./addons/cositt/cositt_hr_document_expiry) | Documentos de empleado con fecha de caducidad + recordatorio automático |
 | 09 | [`cositt_stock_low_alert`](./addons/cositt/cositt_stock_low_alert) | Aviso de stock mínimo por producto, sin reglas de reabastecimiento |
 | 10 | [`cositt_pdf_merge`](./addons/cositt/cositt_pdf_merge) | Combina varios PDF adjuntos a un registro en un único archivo |
+| 11 | [`cositt_maintenance_qr_asset`](./addons/cositt/cositt_maintenance_qr_asset) | QR de identificación para activos de Mantenimiento |
 
 Cada módulo es independiente (`__manifest__.py` propio) e instalable por
 separado — el mono-repo no implica instalarlos todos juntos. Detalle de
