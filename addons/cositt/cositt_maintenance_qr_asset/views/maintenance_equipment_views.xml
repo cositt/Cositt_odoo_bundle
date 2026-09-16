@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_equipment_form_inherit_qr_asset" model="ir.ui.view">
+        <field name="name">maintenance.equipment.form.inherit.cositt.qr.asset</field>
+        <field name="model">maintenance.equipment</field>
+        <field name="inherit_id" ref="maintenance.hr_equipment_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Solo hay un <notebook> en esta vista base (verificado). -->
+            <xpath expr="//notebook" position="inside">
+                <page string="QR" name="cositt_qr_asset">
+                    <group>
+                        <field name="qr_asset_card" widget="image" nolabel="1"
+                               class="oe_avatar"
+                               options="{'size': [256, 256]}"/>
+                        <p class="text-muted">
+                            Escanea este código con la cámara de un móvil para
+                            leer la ficha de este activo (nombre, categoría,
+                            modelo, nº de serie...), sin necesitar conexión ni
+                            sesión en Odoo. Pensado para imprimir en una
+                            etiqueta física pegada al equipo.
+                        </p>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
