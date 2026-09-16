@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="group_cositt_attachment_lock_override" model="res.groups">
+        <field name="name">Cositt Attachment Lock / Puede eliminar adjuntos protegidos</field>
+        <field name="comment">
+            Permite eliminar adjuntos aunque la protección global
+            (cositt_attachment_lock.enabled) esté activada.
+        </field>
+    </record>
+
+    <!--
+        Los administradores (grupo "Ajustes" / base.group_system) pueden
+        eliminar adjuntos protegidos sin configuración adicional: se
+        añade el grupo de este módulo a sus implied_ids (append vía
+        eval, no reemplaza los implied_ids que ya tenga ese grupo).
+    -->
+    <record id="base.group_system" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('group_cositt_attachment_lock_override'))]"/>
+    </record>
+</odoo>
