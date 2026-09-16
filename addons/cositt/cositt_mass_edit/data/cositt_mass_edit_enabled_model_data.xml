@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Contactos habilitado de fábrica (el ejemplo típico: reasignar
+         "Comercial" a varios a la vez). El admin añade más modelos desde
+         Ajustes > Técnico > Edición masiva. -->
+    <record id="cositt_mass_edit_enabled_res_partner" model="cositt.mass.edit.enabled.model">
+        <field name="model_id" ref="base.model_res_partner"/>
+    </record>
+</odoo>

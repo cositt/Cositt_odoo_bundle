@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_cositt_mass_edit_wizard_user,cositt.mass.edit.wizard.user,model_cositt_mass_edit_wizard,base.group_user,1,1,1,1
+access_cositt_mass_edit_enabled_model_system,cositt.mass.edit.enabled.model.system,model_cositt_mass_edit_enabled_model,base.group_system,1,1,1,1

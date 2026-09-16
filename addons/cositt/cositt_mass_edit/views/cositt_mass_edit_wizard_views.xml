@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_cositt_mass_edit_wizard_form" model="ir.ui.view">
+        <field name="name">cositt.mass.edit.wizard.form</field>
+        <field name="model">cositt.mass.edit.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Edición masiva">
+                <field name="res_model" invisible="1"/>
+                <field name="allowed_field_ids" invisible="1" widget="many2many_tags"/>
+                <field name="field_type" invisible="1"/>
+                <field name="field_required" invisible="1"/>
+
+                <p>
+                    Vas a editar
+                    <field name="record_count" nolabel="1" class="oe_inline"/>
+                    registro(s).
+                </p>
+                <group>
+                    <field name="field_id" required="1"/>
+                    <field name="clear_field" invisible="field_required"/>
+                </group>
+                <group invisible="clear_field">
+                    <field name="value_char" string="Valor" invisible="field_type != 'char'"/>
+                    <field name="value_text" string="Valor" invisible="field_type != 'text'"/>
+                    <field name="value_integer" string="Valor" invisible="field_type != 'integer'"/>
+                    <field name="value_float" string="Valor" invisible="field_type != 'float'"/>
+                    <field name="value_boolean" string="Valor" invisible="field_type != 'boolean'"/>
+                    <field name="value_selection" string="Valor" invisible="field_type != 'selection'"/>
+                    <field name="value_date" string="Valor" invisible="field_type != 'date'"/>
+                    <field name="value_datetime" string="Valor" invisible="field_type != 'datetime'"/>
+                    <field name="value_many2one_model" invisible="1"/>
+                    <field name="value_many2one_id" string="Valor"
+                           invisible="field_type != 'many2one'"
+                           options="{'model_field': 'value_many2one_model'}"/>
+                </group>
+                <footer>
+                    <button string="Aplicar" type="object" name="action_apply" class="btn-primary"/>
+                    <button string="Cancelar" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

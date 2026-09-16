@@ -22,6 +22,19 @@ Entorno **exclusivamente de desarrollo local**. Nunca producción, nunca datos d
 | 11 | [`cositt_maintenance_qr_asset`](./addons/cositt/cositt_maintenance_qr_asset) | QR de identificación para activos de Mantenimiento |
 | 12 | [`cositt_activity_digest`](./addons/cositt/cositt_activity_digest) | Menú "Mis Actividades" (todos los modelos) + posponer varias de una vez |
 
+## Cositt Extra Modules
+
+Ronda extra de 5 módulos genéricos adicionales, fuera de la serie mensual
+de 12. En curso — orden secuencial (13 → 14 → 15 → 16 → 17).
+
+| # | Módulo | Descripción | Estado |
+|---|--------|-------------|--------|
+| 13 | [`cositt_mass_edit`](./addons/cositt/cositt_mass_edit) | Edición masiva controlada de registros | Listo |
+| 14 | `cositt_attachment_zip` | Descarga de adjuntos en ZIP | Pendiente |
+| 15 | `cositt_chatter_search` | Buscador y filtros dentro del chatter | Pendiente |
+| 16 | `cositt_attachment_lock` | Protección contra eliminación de adjuntos | Pendiente |
+| 17 | `cositt_list_preferences` | Preferencias persistentes de vistas de lista | Pendiente |
+
 Cada módulo es independiente (`__manifest__.py` propio) e instalable por
 separado — el mono-repo no implica instalarlos todos juntos. Detalle de
 cada uno, decisiones de arquitectura y hallazgos de cada ronda de review
