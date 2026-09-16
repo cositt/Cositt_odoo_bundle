@@ -1,0 +1,69 @@
+// Selector propio (o_cositt_wallpaper_active), activado/desactivado
+// solo por JS mientras el componente HomeMenu está montado — nunca
+// afecta a login (esa pantalla no monta este componente) ni a ninguna
+// otra vista del backend (formularios, listas, kanban, chatter, POS,
+// website, portal quedan fuera por diseño: la clase desaparece del
+// <body> en cuanto se sale del Home Menu).
+//
+// position: fixed (no absolute) a propósito: el Home Menu es
+// desplazable (overflow-auto) en pantallas con muchas apps, y un fondo
+// que se desplazara con el contenido dejaría de parecer un "fondo".
+// Mismo criterio que usa el propio home_menu_background.scss del core
+// (background-attachment: fixed), aplicado aquí vía pseudo-elementos en
+// body para poder controlar blur/overlay por separado sin melar la
+// regla nativa de Enterprise (deliberadamente no se reutiliza
+// .o_home_menu_background: esa clase también la usa la pantalla de
+// login de Enterprise).
+body.o_cositt_wallpaper_active {
+    // Capa de imagen + color de respaldo + blur. El margen negativo
+    // igual al blur evita un halo sin cubrir en los bordes de la
+    // pantalla que el desenfoque, si no, dejaría ver.
+    &::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -2;
+        margin: calc(-1 * var(--cositt-wallpaper-blur, 0px));
+        background-color: var(--cositt-wallpaper-color, transparent);
+        background-image: var(--cositt-wallpaper-image, none);
+        background-size: var(--cositt-wallpaper-fit, cover);
+        background-position: var(--cositt-wallpaper-position, center center);
+        background-repeat: no-repeat;
+        filter: blur(var(--cositt-wallpaper-blur, 0px));
+    }
+
+    // Overlay semitransparente, por encima de la imagen pero por debajo
+    // del contenido real (iconos, texto, buscador) — mantiene la
+    // legibilidad sobre cualquier imagen.
+    &::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background-color: rgba(0, 0, 0, var(--cositt-wallpaper-overlay, 0));
+    }
+
+}
+
+// Ajuste puntual necesario, confirmado en verificación real en
+// navegador (no algo que se hiciera "por si acaso"): .o_web_client es
+// el propio <body> (Odoo pone esa clase directamente en <body>, no en
+// un div envoltorio — comprobado con el propio inspector), y ya lleva
+// la clase nativa .o_home_menu_background de Enterprise, que pinta un
+// background-color/imagen OPACOS (home_menu_background.scss del core,
+// var(--homeMenu-bg-color/--homeMenu-bg-image)) por encima de los
+// pseudo-elementos añadidos aquí — sin este override, la imagen
+// cargaba (confirmado con Image().onload) pero quedaba completamente
+// tapada por el fondo nativo del propio body.
+//
+// Selector compuesto SIN combinador de descendiente (las clases están
+// todas en el mismo elemento, nunca en uno anidado) y con más
+// especificidad que la regla nativa (3 clases aquí vs. 2 en
+// .o_web_client.o_home_menu_background) para ganarle sin necesitar
+// !important. Condicionado a nuestra propia clase de activación, así
+// que nunca puede filtrarse a login ni a ninguna otra pantalla que no
+// monte el Home Menu con el fondo activado.
+body.o_cositt_wallpaper_active.o_web_client.o_home_menu_background {
+    background-color: transparent;
+    background-image: none;
+}

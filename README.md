@@ -35,6 +35,19 @@ de 12. Completa (13 → 17).
 | 16 | [`cositt_attachment_lock`](./addons/cositt/cositt_attachment_lock) | Protección contra eliminación de adjuntos | Listo |
 | 17 | [`cositt_list_preferences`](./addons/cositt/cositt_list_preferences) | Preferencias persistentes de columnas opcionales, por usuario | Listo |
 
+## Cositt Visual Modules
+
+Ronda de módulos que tocan la interfaz visual del backend (frontend
+OWL/SCSS), fuera de las dos series anteriores.
+
+| # | Módulo | Descripción | Estado |
+|---|--------|-------------|--------|
+| 1 | [`cositt_home_wallpaper`](./addons/cositt/cositt_home_wallpaper) | Fondo personalizado del Home Menu (imagen, color, overlay, blur) | Listo |
+
+Requiere **Odoo Enterprise** (el Home Menu de pantalla completa no
+existe en Community — ver el README del propio módulo para el porqué,
+investigado en el código fuente antes de construirlo).
+
 Cada módulo es independiente (`__manifest__.py` propio) e instalable por
 separado — el mono-repo no implica instalarlos todos juntos. Detalle de
 cada uno, decisiones de arquitectura y hallazgos de cada ronda de review

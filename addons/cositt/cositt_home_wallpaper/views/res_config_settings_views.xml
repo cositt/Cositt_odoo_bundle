@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.cositt.home.wallpaper</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Cositt" string="Cositt" name="cositt_home_wallpaper"
+                     groups="base.group_system">
+                    <block title="Fondo del Home Menu" name="cositt_wallpaper_setting_container">
+                        <setting id="cositt_wallpaper_setting"
+                                 help="Solo afecta al Home Menu (pantalla de aplicaciones), no al resto del backend. Requiere Odoo Enterprise.">
+                            <field name="cositt_wallpaper_enabled"/>
+                            <div class="content-group" invisible="not cositt_wallpaper_enabled">
+                                <div class="row mt16">
+                                    <label for="cositt_wallpaper_image" class="col-lg-3 o_light_label"/>
+                                    <field name="cositt_wallpaper_image" widget="image" class="oe_avatar" options="{'size': [0, 200]}"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label for="cositt_wallpaper_color" string="Color de fondo" class="col-lg-3 o_light_label"/>
+                                    <field name="cositt_wallpaper_color" placeholder="#1a2b3c"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label for="cositt_wallpaper_fit" class="col-lg-3 o_light_label"/>
+                                    <field name="cositt_wallpaper_fit"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label for="cositt_wallpaper_position" class="col-lg-3 o_light_label"/>
+                                    <field name="cositt_wallpaper_position"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label for="cositt_wallpaper_overlay" class="col-lg-3 o_light_label"/>
+                                    <field name="cositt_wallpaper_overlay"/> %
+                                </div>
+                                <div class="row mt8">
+                                    <label for="cositt_wallpaper_blur" class="col-lg-3 o_light_label"/>
+                                    <field name="cositt_wallpaper_blur"/> px
+                                </div>
+                                <div class="row mt16">
+                                    <button name="action_cositt_reset_wallpaper"
+                                            type="object"
+                                            string="Restablecer apariencia"
+                                            class="btn-secondary"
+                                            confirm="Esto desactivará el fondo personalizado y eliminará la imagen subida. ¿Continuar?"/>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>
