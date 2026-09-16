@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="cositt_list_column_preference_rule_own" model="ir.rule">
+        <field name="name">Preferencias de columnas: solo las propias</field>
+        <field name="model_id" ref="model_cositt_list_column_preference"/>
+        <field name="domain_force">[('user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <record id="cositt_list_column_preference_rule_admin" model="ir.rule">
+        <field name="name">Preferencias de columnas: administradores ven todas</field>
+        <field name="model_id" ref="model_cositt_list_column_preference"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('base.group_system'))]"/>
+    </record>
+
+</odoo>

@@ -25,7 +25,7 @@ Entorno **exclusivamente de desarrollo local**. Nunca producción, nunca datos d
 ## Cositt Extra Modules
 
 Ronda extra de 5 módulos genéricos adicionales, fuera de la serie mensual
-de 12. En curso — orden secuencial (13 → 14 → 15 → 16 → 17).
+de 12. Completa (13 → 17).
 
 | # | Módulo | Descripción | Estado |
 |---|--------|-------------|--------|
@@ -33,7 +33,7 @@ de 12. En curso — orden secuencial (13 → 14 → 15 → 16 → 17).
 | 14 | [`cositt_attachment_zip`](./addons/cositt/cositt_attachment_zip) | Descarga de adjuntos en ZIP | Listo |
 | 15 | [`cositt_chatter_search`](./addons/cositt/cositt_chatter_search) | Añade búsqueda por autor al buscador nativo del chatter | Listo |
 | 16 | [`cositt_attachment_lock`](./addons/cositt/cositt_attachment_lock) | Protección contra eliminación de adjuntos | Listo |
-| 17 | `cositt_list_preferences` | Preferencias persistentes de vistas de lista | Pendiente |
+| 17 | [`cositt_list_preferences`](./addons/cositt/cositt_list_preferences) | Preferencias persistentes de columnas opcionales, por usuario | Listo |
 
 Cada módulo es independiente (`__manifest__.py` propio) e instalable por
 separado — el mono-repo no implica instalarlos todos juntos. Detalle de
