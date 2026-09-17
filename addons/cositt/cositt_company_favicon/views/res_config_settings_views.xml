@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.cositt.company.favicon</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Cositt - Marca" string="Cositt - Marca" name="cositt_company_favicon"
+                     groups="base.group_system">
+                    <block title="Favicon y título del navegador" name="cositt_branding_setting_container">
+                        <setting id="cositt_branding_setting"
+                                 help="Se aplica en todo el sitio: backend, /web/login y portal.">
+                            <field name="cositt_branding_enabled"/>
+                            <div class="content-group" invisible="not cositt_branding_enabled">
+                                <div class="row mt16">
+                                    <label for="cositt_favicon_image" string="Favicon (PNG)" class="col-lg-3 o_light_label"/>
+                                    <field name="cositt_favicon_image" widget="image" class="oe_avatar" options="{'size': [0, 64]}"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label for="cositt_browser_title" string="Título de pestaña" class="col-lg-3 o_light_label"/>
+                                    <field name="cositt_browser_title" placeholder="Cositt ERP"/>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>

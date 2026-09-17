@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- web.layout ya declara x_icon y title como variables QWeb con
+         fallback (`x_icon or '/web/static/img/favicon.ico'`,
+         `title or 'Odoo'`) — investigado en el código fuente antes de
+         escribir nada: hoy solo las rellena el mecanismo de apps PWA
+         "scoped" (ver el t-set de x_icon en web.login/webclient_bootstrap
+         del core). Reutilizarlas con un simple t-set es mucho más
+         seguro que un xpath sobre el markup del <head> — ancla en
+         web.layout, la plantilla raíz que TODAS las páginas atraviesan
+         (backend, login, portal), sin el riesgo de colisión con
+         web_enterprise/website que sí afectó a cositt_login_background
+         (ese caso necesitaba insertar markup nuevo condicionado por
+         ruta; este solo rellena un valor por defecto).
+
+         `t-value="x_icon or ..."` / `"title or ..."`, NUNCA al revés:
+         si alguna otra ruta/controlador ya puso un título o icono
+         específico ANTES de que esta xpath se ejecute, ese valor más
+         específico gana — este módulo solo rellena cuando esas
+         variables siguen sin definir (falsy), nunca pisa un valor ya
+         puesto por otro sitio.
+
+         Bug real encontrado en code review (no en tests): un primer
+         intento tenía el orden al revés (`cositt_favicon_url or
+         x_icon`), lo que significa "mi valor SIEMPRE gana si existe" —
+         exactamente lo contrario de lo que dice este comentario.
+         Reproducido contra /scoped_app?app_id=... (la página "Añadir
+         <App> a la pantalla de inicio" de PWA, que hace su propio
+         t-set de title/x_icon dentro de su propio t-call a
+         web.layout, ANTES de que esta xpath corra): con el orden
+         viejo, el título/icono específico de esa app quedaba pisado
+         por la marca de empresa, dejando el <title> y el favicon
+         inconsistentes con el <link rel="apple-touch-icon"> (ese sí
+         correcto, viene de una variable distinta calculada antes).
+         Con el orden corregido, /web/login, /odoo y el portal siguen
+         recibiendo la marca igual (ahí x_icon/title nunca se
+         pre-fijan, así que caen en el fallback y esta xpath sí
+         aplica) — verificado que ningún test existente dependía del
+         orden viejo. -->
+    <template id="layout_company_branding" inherit_id="web.layout">
+        <xpath expr="//title" position="before">
+            <t t-set="cositt_favicon_url"
+               t-value="request.env.company._cositt_get_favicon_url()"/>
+            <t t-set="cositt_browser_title_value"
+               t-value="request.env.company._cositt_get_browser_title()"/>
+            <t t-set="x_icon" t-value="x_icon or cositt_favicon_url"/>
+            <t t-set="title" t-value="title or cositt_browser_title_value"/>
+        </xpath>
+    </template>
+</odoo>
