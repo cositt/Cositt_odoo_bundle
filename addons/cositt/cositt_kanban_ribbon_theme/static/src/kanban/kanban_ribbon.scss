@@ -39,3 +39,46 @@
         }
     }
 }
+
+// Estilo "border": banda sólida pegada al borde izquierdo de la
+// tarjeta — alternativa más discreta al ribbon para quien prefiera un
+// indicador que no tape ninguna esquina.
+.o_kanban_record.o_cositt_kanban_border {
+    border-left-style: solid;
+    border-left-width: 4px;
+
+    @for $i from 2 through length($o-colors) {
+        &.o_colorlist_item_color_#{$i - 1} {
+            border-left-color: nth($o-colors, $i);
+        }
+    }
+}
+
+// Estilo "dot": punto pequeño en la esquina superior IZQUIERDA (no
+// derecha) — verificado en navegador real que la esquina superior
+// derecha ya la ocupa, al pasar el ratón por la tarjeta, el menú
+// contextual nativo "⋮" (dropdown de acciones de kanban_record.xml),
+// tapando/solapando un punto puesto ahí. La izquierda queda libre
+// (el thin native color strip de project.task, si lo hay, vive pegado
+// al borde x=0; este punto queda desplazado 4px y no lo toca).
+.o_kanban_record.o_cositt_kanban_dot {
+    overflow: visible;
+
+    &::before {
+        content: "";
+        position: absolute;
+        top: 4px;
+        left: 4px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    @for $i from 2 through length($o-colors) {
+        &.o_colorlist_item_color_#{$i - 1}::before {
+            background-color: nth($o-colors, $i);
+        }
+    }
+}

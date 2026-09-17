@@ -8,6 +8,16 @@ import { getColorIndex, KanbanRecord } from "@web/views/kanban/kanban_record";
 // — cero RPC por vista kanban abierta. Ver models/ir_http.py.
 const RIBBON_RULES = session.cositt_kanban_ribbon_rules || {};
 
+// Reflejo 1:1 del Selection "style" del modelo (ver
+// cositt_kanban_ribbon_rule.py) — "ribbon" mapeado a la clase histórica
+// o_cositt_kanban_ribbon (sin renombrar, evita romper CSS ya escrito
+// contra ese nombre en despliegues existentes de este módulo).
+const STYLE_TO_CLASS = {
+    ribbon: "o_cositt_kanban_ribbon",
+    border: "o_cositt_kanban_border",
+    dot: "o_cositt_kanban_dot",
+};
+
 // patch() sobre getRecordClasses(), NO sobre la plantilla OWL de
 // KanbanRecord: es la misma función que el propio core ya usa para
 // añadir o_kanban_color_N cuando el arch declara card_color_field
@@ -23,11 +33,11 @@ patch(KanbanRecord.prototype, {
     // antes de escribir esto. Concatenar, no .push().
     getRecordClasses() {
         const baseClasses = super.getRecordClasses();
-        const fieldName = RIBBON_RULES[this.props.record.resModel];
-        if (!fieldName) {
+        const rule = RIBBON_RULES[this.props.record.resModel];
+        if (!rule) {
             return baseClasses;
         }
-        const value = this.props.record.data[fieldName];
+        const value = this.props.record.data[rule.field];
         if (value === undefined) {
             return baseClasses;
         }
@@ -44,11 +54,16 @@ patch(KanbanRecord.prototype, {
         const colorIndex = ((rawIndex % 12) + 12) % 12;
         if (colorIndex === 0) {
             // Índice 0 = "Sin color" en la paleta nativa (ver
-            // ColorList.COLORS) — no pintar un ribbon gris en TODAS
+            // ColorList.COLORS) — no pintar un indicador gris en TODAS
             // las tarjetas por defecto, solo en las que de verdad
             // tienen un color elegido.
             return baseClasses;
         }
-        return `${baseClasses} o_cositt_kanban_ribbon o_colorlist_item_color_${colorIndex}`;
+        // Una clase por estilo (ribbon/border/dot, ver
+        // kanban_ribbon.scss) + el mismo o_colorlist_item_color_N de
+        // siempre para el color en sí — el estilo solo decide la
+        // FORMA, nunca inventa una paleta nueva.
+        const styleClass = STYLE_TO_CLASS[rule.style] || STYLE_TO_CLASS.ribbon;
+        return `${baseClasses} ${styleClass} o_colorlist_item_color_${colorIndex}`;
     },
 });

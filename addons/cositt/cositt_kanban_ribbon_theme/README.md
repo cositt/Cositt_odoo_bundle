@@ -2,11 +2,21 @@
 
 ## Qué hace
 
-Añade un ribbon (banda triangular de color en la esquina) a las
-tarjetas kanban de los modelos que el administrador elija, usando un
-campo Integer que ya tenga ese modelo — típicamente el mismo campo
-`color` que ya usa el selector de color nativo de Odoo ("Establecer
-color" en el menú de cada tarjeta).
+Añade un indicador de color a las tarjetas kanban de los modelos que
+el administrador elija, usando un campo Integer que ya tenga ese
+modelo — típicamente el mismo campo `color` que ya usa el selector de
+color nativo de Odoo ("Establecer color" en el menú de cada tarjeta).
+Tres estilos a elegir por regla (campo `style`):
+
+- **Ribbon** (por defecto): banda triangular en la esquina superior
+  derecha — el diseño original del módulo.
+- **Borde izquierdo**: banda sólida de 4px pegada al lado izquierdo de
+  la tarjeta, más discreta.
+- **Punto**: círculo pequeño en la esquina superior derecha.
+
+Los tres reutilizan exactamente la misma paleta de 12 colores nativa
+de Odoo — el estilo solo cambia la forma, nunca los colores
+disponibles ni el mecanismo de configuración.
 
 ## Problema que resuelve
 
@@ -93,8 +103,11 @@ desarrollador, mismo patrón que `cositt_smart_attachment_name`):
 
 1. Elegí el modelo (ej. "Task" para `project.task`).
 2. Dejá "color" como campo (o poné otro Integer del modelo).
-3. Guardá. Las tarjetas kanban de ese modelo con un color ya elegido
-   (vía el selector nativo "Establecer color") mostrarán el ribbon.
+3. Elegí el estilo (Ribbon / Borde izquierdo / Punto) — Ribbon por
+   defecto, mismo comportamiento que antes de que existiera este campo.
+4. Guardá. Las tarjetas kanban de ese modelo con un color ya elegido
+   (vía el selector nativo "Establecer color") mostrarán el indicador
+   con la forma configurada.
 
 Un solo administrador puede crear/editar/borrar reglas
 (`base.group_system`); cualquier usuario interno puede leerlas
@@ -104,9 +117,14 @@ pinte en el navegador de cualquiera, no solo del admin.
 ## Seguridad
 
 - Sin modelo de datos nuevo expuesto más allá de `model_id` (nombre
-  técnico de modelo) y `color_field_name` (nombre de campo) — nada
-  sensible, y ya visible para cualquier usuario interno vía inspector
-  del navegador en cualquier instalación de Odoo.
+  técnico de modelo), `color_field_name` (nombre de campo) y `style`
+  (uno de tres valores fijos de un Selection) — nada sensible, y ya
+  visible para cualquier usuario interno vía inspector del navegador en
+  cualquier instalación de Odoo. `style` sigue el mismo ACL que el
+  resto de campos de la regla (lectura abierta a `base.group_user`,
+  escritura solo `base.group_system`) — no necesitó tocar
+  `security/ir.model.access.csv`, es un campo más del mismo modelo, no
+  uno con `groups=` propio.
 - Sin `sudo()` en ningún punto (verificado por su propio test
   `test_module_never_calls_sudo`) — ver el bug HIGH de arriba sobre por
   qué esto exigió denormalizar `model_name` en vez de simplemente
@@ -139,3 +157,34 @@ solo en tests). Kanban de Inventario (sin regla) confirmado sin
 cambios. 0 errores en consola JS. Datos de prueba (proyecto, tarea,
 regla) borrados después — base dev limpia. 16/16 tests (incluye
 regresión HTTP real del bug HIGH con un usuario interno no-admin).
+
+### Ronda de estilos (border + dot)
+
+Code review (1 agente dedicado) sin CRITICAL/HIGH. Confirmó que no hay
+regresión del bug HIGH original (`_cositt_get_active_ribbon_rules()`
+sigue leyendo solo `model_name`, nunca `model_id.model`), que `style`
+hereda el mismo ACL del resto de campos de la regla sin tocar
+`security/ir.model.access.csv`, y que ningún otro módulo del repo
+depende de la forma antigua (string plano) de
+`session.cositt_kanban_ribbon_rules` — grep del repo entero, cero
+coincidencias fuera de este módulo.
+
+**Bug real encontrado en verificación manual, no en tests ni en
+review** (mismo patrón repetido ya varias veces en este proyecto — ver
+CLAUDE.md): el estilo "dot" se diseñó inicialmente en la esquina
+superior derecha (`top:4px; right:4px`), igual que el ribbon. En
+navegador real, al pasar el ratón sobre la tarjeta, el menú contextual
+nativo "⋮" de kanban aparece exactamente en esa misma esquina y tapa el
+punto. Ningún test automatizado lo detecta porque ninguno renderiza
+CSS real ni simula `:hover`. Corregido moviendo el punto a la esquina
+superior **izquierda** (`top:4px; left:4px`) — verificado en navegador
+que ahí no choca con nada (el thin native color strip de
+`project.task`, si lo hay, vive pegado a `x=0`, y el punto queda
+desplazado 4px de ese borde).
+
+También verificado visualmente: el borde izquierdo de 4px (estilo
+"border") no choca con el border-radius/sombra nativos de la tarjeta
+kanban — queda limpio, y "border"/"ribbon"/"dot" se probaron los tres
+por separado sobre las mismas dos tareas de prueba (colores real de la
+paleta nativa, no simulados). 18/18 tests (22 aserciones). Datos de
+prueba (proyecto, 2 tareas, regla) borrados después — base dev limpia.

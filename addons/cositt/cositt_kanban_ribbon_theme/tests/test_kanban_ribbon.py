@@ -42,15 +42,37 @@ class TestCosittKanbanRibbonRule(TransactionCase):
         })
         # Sobre el recordset propio de la regla creada, no search([]) —
         # mismo motivo que arriba: aislado de cualquier otra regla que
-        # ya exista en la base.
+        # ya exista en la base. Forma del valor: {field, style} (antes
+        # solo el nombre de campo como string) — cambio de #10
+        # (cositt_kanban_style, ver README) para poder elegir entre
+        # ribbon/borde/punto por regla.
         self.assertEqual(
             rule._cositt_get_active_ribbon_rules(),
-            {"res.partner.category": "color"},
+            {"res.partner.category": {"field": "color", "style": "ribbon"}},
         )
 
     def test_color_field_name_defaults_to_color(self):
         rule = self.Rule.create({"model_id": self.category_model.id})
         self.assertEqual(rule.color_field_name, "color")
+
+    def test_style_defaults_to_ribbon(self):
+        rule = self.Rule.create({"model_id": self.category_model.id})
+        self.assertEqual(rule.style, "ribbon")
+
+    def test_style_border_and_dot_appear_in_active_rules_dict(self):
+        rule = self.Rule.create({
+            "model_id": self.category_model.id,
+            "style": "border",
+        })
+        self.assertEqual(
+            rule._cositt_get_active_ribbon_rules(),
+            {"res.partner.category": {"field": "color", "style": "border"}},
+        )
+        rule.style = "dot"
+        self.assertEqual(
+            rule._cositt_get_active_ribbon_rules(),
+            {"res.partner.category": {"field": "color", "style": "dot"}},
+        )
 
     def test_model_name_is_denormalized_from_model_id(self):
         # Regresión directa del bug real de code review: session_info()
@@ -118,7 +140,7 @@ class TestCosittKanbanRibbonRule(TransactionCase):
         rules = self.Rule.with_user(user).browse(rule.ids)
         self.assertEqual(
             rules._cositt_get_active_ribbon_rules(),
-            {"res.partner.category": "color"},
+            {"res.partner.category": {"field": "color", "style": "ribbon"}},
         )
 
     def test_ordinary_user_cannot_write_rules(self):
@@ -155,19 +177,25 @@ class TestCosittKanbanRibbonHttp(HttpCase):
     def test_backend_session_info_reflects_configured_rule(self):
         # Antes/después en vez de asumir "{}" por defecto: esta base de
         # dev puede tener otras reglas de sesiones anteriores (hallazgo
-        # real de code review — no asumir un entorno limpio).
+        # real de code review — no asumir un entorno limpio). El valor
+        # ahora es un objeto {field, style}, no un string plano (ver
+        # test_valid_rule_appears_in_active_rules_dict).
         self.authenticate("admin", "admin")
         response = self.url_open("/odoo")
         self.assertEqual(response.status_code, 200)
-        self.assertNotIn('"res.partner.category": "color"', response.text)
+        self.assertNotIn('"res.partner.category": {"field": "color"', response.text)
 
         category_model = self.env.ref("base.model_res_partner_category")
         self.env["cositt.kanban.ribbon.rule"].create({
             "model_id": category_model.id,
+            "style": "border",
         })
         response = self.url_open("/odoo")
         self.assertEqual(response.status_code, 200)
-        self.assertIn('"res.partner.category": "color"', response.text)
+        self.assertIn(
+            '"res.partner.category": {"field": "color", "style": "border"}',
+            response.text,
+        )
 
     def test_backend_session_info_does_not_500_for_ordinary_user(self):
         # Regresión HTTP real del HIGH de code review (ver también

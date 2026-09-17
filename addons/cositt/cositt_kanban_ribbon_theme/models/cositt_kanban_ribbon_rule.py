@@ -40,6 +40,19 @@ class CosittKanbanRibbonRule(models.Model):
         '"color", el mismo que ya usa el selector de color nativo de '
         "Odoo en la mayoría de modelos).",
     )
+    style = fields.Selection(
+        [
+            ("ribbon", "Ribbon (esquina)"),
+            ("border", "Borde izquierdo"),
+            ("dot", "Punto indicador"),
+        ],
+        string="Estilo",
+        default="ribbon",
+        required=True,
+        help="Cómo se muestra el color en la tarjeta kanban. Los tres "
+        "reutilizan la misma paleta de 12 colores nativa de Odoo — solo "
+        "cambia la forma, nunca los colores disponibles.",
+    )
     active = fields.Boolean(default=True)
 
     @api.constrains("model_id", "color_field_name")
@@ -81,15 +94,16 @@ class CosittKanbanRibbonRule(models.Model):
                 )
 
     def _cositt_get_active_ribbon_rules(self):
-        """{modelo_técnico: nombre_de_campo} de las reglas activas —
-        listo para inyectar en session_info() (ver models/ir_http.py).
-        Se llama sobre un recordset ya filtrado por el propio caller
-        (o sobre el modelo entero); solo se consideran las activas.
+        """{modelo_técnico: {"field": ..., "style": ...}} de las reglas
+        activas — listo para inyectar en session_info() (ver
+        models/ir_http.py). Se llama sobre un recordset ya filtrado por
+        el propio caller (o sobre el modelo entero); solo se consideran
+        las activas.
 
         Usa model_name (denormalizado), NUNCA model_id.model aquí: ver
         el help de model_name arriba para el bug real que esto evita."""
         return {
-            rule.model_name: rule.color_field_name
+            rule.model_name: {"field": rule.color_field_name, "style": rule.style}
             for rule in self
             if rule.active
         }

@@ -8,6 +8,7 @@
             <list string="Reglas de ribbon kanban">
                 <field name="model_id"/>
                 <field name="color_field_name"/>
+                <field name="style"/>
                 <field name="active" widget="boolean_toggle"/>
             </list>
         </field>
@@ -22,14 +23,16 @@
                     <group>
                         <field name="model_id"/>
                         <field name="color_field_name" placeholder="color"/>
+                        <field name="style"/>
                         <field name="active"/>
                     </group>
                     <div class="text-muted">
                         El campo debe ser un Integer del propio modelo (por
                         defecto "color", el mismo que usa el selector de
                         color nativo de Odoo). Las tarjetas kanban de este
-                        modelo mostrarán un ribbon con el color
-                        correspondiente en la esquina.
+                        modelo mostrarán un indicador con el color
+                        correspondiente, con la forma elegida en "Estilo"
+                        (ribbon en la esquina, borde izquierdo o punto).
                         <br/><br/>
                         <b>Importante:</b> la vista kanban de destino debe
                         tener ese campo entre los que carga (aunque sea
