@@ -53,6 +53,22 @@ módulo para el porqué, investigado en el código fuente antes de
 construirlo). `cositt_login_background` funciona en Community puro (la
 pantalla de login vive en el módulo base `web`, no en `web_enterprise`).
 
+### Backlog (pendiente)
+
+| # | Módulo | Idea | Notas |
+|---|--------|------|-------|
+| 5 | ~~`cositt_login_branding`~~ | Logo, mensaje y colores de empresa en el login | **Hecho** — extendido `cositt_login_background` en vez de crear módulo nuevo (mensaje + color de acento; el logo ya lo muestra el core sin cambios). Ver README de ese módulo. |
+| 6 | `cositt_backend_accent` | Elegir color corporativo para botones y elementos activos del backend | — |
+| 7 | `cositt_company_favicon` | Favicon y título del navegador personalizados por empresa/base | — |
+| 8 | `cositt_announcement_banner` | Banner superior configurable para avisos internos | — |
+| 9 | `cositt_seasonal_theme` | Decoraciones ligeras programables (Navidad, feria, aniversario, campaña...) | — |
+| 10 | ~~`cositt_kanban_style`~~ | Más opciones visuales para tarjetas kanban: bordes, indicadores | **Hecho** — extendido `cositt_kanban_ribbon_theme` en vez de crear módulo nuevo (campo `style`: ribbon/borde/punto). Ver README de ese módulo. |
+| 11 | `cositt_user_avatar_style` | Avatares automáticos con iniciales, colores y estilo uniforme | — |
+
+Sin orden de prioridad fijo. Antes de empezar cualquiera, revisar si el
+core de Odoo ya lo resuelve (mismo criterio que evitó duplicar trabajo
+en el plugin 09 — ver CLAUDE.md).
+
 Cada módulo es independiente (`__manifest__.py` propio) e instalable por
 separado — el mono-repo no implica instalarlos todos juntos. Detalle de
 cada uno, decisiones de arquitectura y hallazgos de cada ronda de review

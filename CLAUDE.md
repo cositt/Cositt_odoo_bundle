@@ -684,5 +684,142 @@ rápida del PDF real la próxima vez que lo use.
 `cositt_kanban_ribbon_theme`, `cositt_report_watermark` — los 3 últimos
 completados en una misma sesión larga, cada uno con al menos un bug
 real encontrado en verificación manual o code review (nunca solo en
-tests aislados) y corregido antes de cerrar. Pendiente de commit (no se
-hace commit salvo petición explícita del usuario).
+tests aislados) y corregido antes de cerrar. Comiteado y pusheado
+(`b9ff7b9`).
+
+## Backlog "Visual Modules 5-11" — #5 y #10 cerrados (extendiendo módulos existentes)
+
+Ronda posterior: el usuario pidió atacar primero las dos ideas del
+backlog marcadas como solapadas con módulos ya existentes (#5
+`cositt_login_branding`, #10 `cositt_kanban_style`), para "quitárselas
+de encima". Decisión de arquitectura en ambos casos: **extender el
+módulo existente, no crear uno nuevo** — evita duplicar el mecanismo
+de configuración/seguridad ya revisado, consistente con la nota que ya
+dejaba el propio backlog del README raíz.
+
+**#5 → `cositt_login_background`** ganó dos campos nuevos en
+`res.company`: `cositt_login_bg_message` (Char, máx. 140, escapado con
+`t-esc`, nunca `Markup()` — es texto libre de un admin) y
+`cositt_login_bg_accent_color` (Char hex, mismo regex que el color de
+fondo, inyectado como variable CSS `--cositt-login-accent` en `:root`
+porque el botón/enlaces del login viven fuera del div
+`#o_cositt_login_bg` en el DOM). El mensaje se ancla en
+`oe_structure_login_top`, el punto de extensión nativo que `web.login`
+ya declara para esto — no hizo falta tocar `web.layout` ni el filtro
+por `request.httprequest.path` que sí necesita el fondo. El logo NO
+necesitó campo nuevo: `web.login_layout` ya muestra
+`company_logo` nativo. Ambos campos nuevos comparten el mismo
+interruptor que el fondo (`cositt_login_bg_enabled`), reetiquetado de
+"Fondo de login activo" a "Personalización de login activa" (hallazgo
+MEDIUM de code review: el nombre viejo era engañoso una vez el campo
+pasó a gobernar tres cosas, no solo el fondo — se corrigió el label sin
+tocar el nombre técnico del campo, para no forzar una migración).
+37/37 tests.
+
+**#10 → `cositt_kanban_ribbon_theme`** ganó un campo `style` (Selection:
+`ribbon`/`border`/`dot`, default `ribbon`) en `cositt.kanban.ribbon.rule`.
+`_cositt_get_active_ribbon_rules()` cambió de forma
+(`{modelo: campo_color}` → `{modelo: {"field":..., "style":...}}`) —
+sin romper nada externo (grep del repo entero confirmó que ningún otro
+módulo depende de la forma vieja). **Bug real encontrado en
+verificación manual, ni en tests ni en code review**: el estilo "dot"
+se diseñó primero en la esquina superior derecha, igual que el ribbon
+— en navegador real, al pasar el ratón, el menú contextual nativo "⋮"
+de kanban aparece exactamente ahí y tapa el punto. Ningún test lo
+detecta (ninguno simula `:hover` ni renderiza CSS real). Corregido
+moviendo el punto a la esquina superior izquierda. 18/18 tests.
+
+Ambos con code review (1 agente cada uno, en paralelo): 0
+CRITICAL/HIGH en los dos. MEDIUM corregidos: el toggle mal nombrado de
+arriba, y en ambos módulos el README no se había actualizado tras el
+cambio (corregido) y el manual PDF no se había regenerado (regenerado
+con capturas reales nuevas: panel de Ajustes con mensaje/acento,
+`/web/login` anónimo real con el mensaje y el botón en el color de
+acento, formulario de regla con el campo "Estilo", tarjetas kanban con
+border y con dot). Tabla de backlog del README raíz actualizada
+marcando #5 y #10 como hechos.
+
+**Lección de proceso repetida** (ya iba una vez en la ronda anterior de
+este mismo módulo, ver README de `cositt_login_background`): dejar
+`cositt_login_bg_enabled=True` en la compañía real tras la
+verificación manual en navegador rompió 2 tests al re-correr la suite
+después. Sección `[[feedback-odoo-plugin-workflow]]` de memoria
+actualizada con esto — rerun de tests SIEMPRE después de cualquier
+exploración manual en `cositt_plugins_dev`, no solo antes.
+
+Pendiente de commit (no se hace commit salvo petición explícita del
+usuario).
+
+## #6 cositt_backend_accent (nuevo módulo) — cerrado
+
+Color de acento configurable (por compañía) para botones primarios,
+checkboxes/radios e ítem de menú activo del backend. Investigado antes
+de escribir código: `$o-brand-primary` es una variable Sass compilada
+fija (no se puede tocar en runtime); Bootstrap 5 sí expone custom
+properties por componente (`--btn-bg` etc., **sin** el prefijo `bs-`
+estándar — Odoo compila su propio fork), y el navbar ya expone
+`--NavBar-entry-*--active` con fallback.
+
+**Bug CRITICAL real, encontrado en verificación manual, no en tests ni
+en el primer code review**: el primer diseño reasignaba esas custom
+properties directamente con `var(--cositt-backend-accent)` sin
+fallback, confiando en el mismo mecanismo "inerte por defecto" ya
+usado en `cositt_login_background`. Ese mecanismo NO es seguro cuando
+se reasigna una custom property de OTRO componente (Bootstrap) en vez
+de una propiedad normal — la cascada decide qué declaración de
+`--btn-bg` gana ANTES de comprobar si su valor es válido, así que un
+valor inválido no "cae de vuelta" a la declaración de Bootstrap que
+perdió esa cascada. Resultado real: con el módulo recién instalado y
+SIN configurar, todos los botones primarios del backend quedaban
+invisibles. **HIGH relacionado**: `web_enterprise` (instalado en este
+proyecto) fija `--NavBar-entry-*--active` con valores FIJOS
+directamente sobre `.o_main_navbar` — un `:root` nunca le gana, mismo
+patrón que ya rompió el fondo de login en una ronda anterior. Fix en
+ambos: clase marcador `.o_cositt_backend_accent_active` en `<html>`
+(añadida por JS solo con color configurado) envolviendo TODAS las
+reglas, ancladas al elemento real (`.o_main_navbar`), no solo `:root`.
+Memoria nueva:
+`~/.claude/projects/-Users-juan-Desktop-12messes12apps/memory/feedback_css_custom_property_override_pattern.md`
+para que sesiones futuras no repitan este patrón inseguro.
+
+**Mismo bug encontrado también en `cositt_login_background`** (código
+de esta misma sesión, sin commitear): el botón "Log in" quedaba
+transparente sin acento configurado — confirmado en vivo
+(`getComputedStyle(...).backgroundColor` → `rgba(0,0,0,0)` contra
+`/web/login` real). Corregido moviendo la regla del botón/enlaces
+DENTRO del `<style>` server-side ya condicionado por
+`t-if="accent_color"` (en vez de vivir en el SCSS estático, siempre
+presente) — el módulo no usa JS, así que la clase marcador de arriba
+no aplica; el condicional server-side cumple el mismo papel. 38/38
+tests tras el fix.
+
+14/14 tests. Verificado en navegador real en dos rondas (antes y
+después del fix): estado desactivado ahora normal, estado configurado
+en verde (#0e9f6e) en botones/checkboxes/navbar de Ajustes. Manual PDF
+generado con capturas de ambos estados.
+
+## #7 cositt_company_favicon — cerrado
+
+Favicon (PNG) + título del navegador personalizados por compañía, en
+todo el sitio (backend, login, portal — sin restricción de ruta,
+a diferencia de sus hermanos). Reutiliza `x_icon`/`title`, variables
+QWeb que `web.layout` ya declara con fallback, vía `t-set="... or
+title"` (nunca incondicional, para no pisar un título más específico
+de otra ruta). Patch JS sobre `titleService` para que la marca
+sobreviva a la navegación SPA del backend.
+
+**Bug real encontrado en verificación manual**: el patch mezclaba la
+marca con `{...parts, cositt_brand: brand}` en una sola llamada — JS
+conserva el orden de inserción de claves y `setParts()` no mueve una
+clave ya existente, así que el título salía "Marca - Vista" en vez de
+"Vista - Marca" (la llamada inicial al arrancar insertaba la marca
+primero, y se quedaba ahí para siempre). Corregido borrando y
+reinsertando la clave en cada llamada. Solo se detectó navegando de
+verdad dentro del backend (clic en menú), no en la carga inicial.
+
+Code review: 1 MEDIUM real, encontrado y corregido — la precedencia del
+`t-set` estaba invertida (`cositt_favicon_url or x_icon` daba prioridad
+SIEMPRE a este módulo), pisando el título/favicon específico de
+`/scoped_app` (página PWA "Añadir a la pantalla de inicio"). Corregido
+a `x_icon or cositt_favicon_url` + test de regresión. 21/21 tests.
+Manual PDF generado. Cerrado.
