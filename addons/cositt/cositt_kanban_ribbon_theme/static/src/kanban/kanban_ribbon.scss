@@ -1,0 +1,41 @@
+// Ribbon triangular en la esquina superior derecha de la tarjeta,
+// SOLO cuando getRecordClasses() (parcheado en kanban_ribbon_patch.js)
+// añade o_cositt_kanban_ribbon + o_colorlist_item_color_N — nunca en
+// modelos no configurados, nunca en tarjetas sin color elegido (índice
+// 0 = "Sin color", excluido a propósito en el JS).
+//
+// Reutiliza $o-colors (web/static/src/scss/secondary_variables.scss),
+// la MISMA lista de 12 colores que ya usa el selector de color nativo
+// de Odoo (web/static/src/core/colorlist/colorlist.scss, clases
+// o_colorlist_item_color_N) — cero colores propios inventados. $o-colors
+// NO se redefine en modo oscuro (comprobado: no existe override en
+// ningún *.dark.scss de web) — la consistencia viene de que el propio
+// indicador de color nativo de kanban (o_kanban_color_N,
+// kanban_record.scss) usa exactamente los mismos valores sin ajuste,
+// así que el ribbon combina con ese mismo criterio, no con uno propio.
+.o_kanban_record.o_cositt_kanban_ribbon {
+    // position:relative NO se declara aquí: .o_kanban_record ya lo
+    // trae siempre desde el core (kanban_record.scss) — declararlo de
+    // nuevo sería código muerto.
+    overflow: visible;
+
+    &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 0 22px 22px 0;
+        border-color: transparent transparent transparent transparent;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    @for $i from 2 through length($o-colors) {
+        &.o_colorlist_item_color_#{$i - 1}::before {
+            border-right-color: nth($o-colors, $i);
+        }
+    }
+}

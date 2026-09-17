@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_cositt_kanban_ribbon_rule_list" model="ir.ui.view">
+        <field name="name">cositt.kanban.ribbon.rule.list</field>
+        <field name="model">cositt.kanban.ribbon.rule</field>
+        <field name="arch" type="xml">
+            <list string="Reglas de ribbon kanban">
+                <field name="model_id"/>
+                <field name="color_field_name"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_cositt_kanban_ribbon_rule_form" model="ir.ui.view">
+        <field name="name">cositt.kanban.ribbon.rule.form</field>
+        <field name="model">cositt.kanban.ribbon.rule</field>
+        <field name="arch" type="xml">
+            <form string="Regla de ribbon kanban">
+                <sheet>
+                    <group>
+                        <field name="model_id"/>
+                        <field name="color_field_name" placeholder="color"/>
+                        <field name="active"/>
+                    </group>
+                    <div class="text-muted">
+                        El campo debe ser un Integer del propio modelo (por
+                        defecto "color", el mismo que usa el selector de
+                        color nativo de Odoo). Las tarjetas kanban de este
+                        modelo mostrarán un ribbon con el color
+                        correspondiente en la esquina.
+                        <br/><br/>
+                        <b>Importante:</b> la vista kanban de destino debe
+                        tener ese campo entre los que carga (aunque sea
+                        oculto) — si ningún campo/atributo de esa vista lo
+                        referencia, Odoo no lo trae al navegador y el
+                        ribbon simplemente no aparece, sin ningún error.
+                        Si más adelante se elimina el campo del modelo
+                        (Studio, actualización), la regla queda inactiva
+                        en la práctica de la misma forma silenciosa —
+                        revisa esta lista tras cambios grandes de campos.
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_cositt_kanban_ribbon_rule" model="ir.actions.act_window">
+        <field name="name">Ribbon de kanban (Cositt)</field>
+        <field name="res_model">cositt.kanban.ribbon.rule</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_cositt_kanban_ribbon_rule"
+              name="Ribbon de kanban (Cositt)"
+              parent="base.menu_custom"
+              action="action_cositt_kanban_ribbon_rule"
+              sequence="61"/>
+
+</odoo>
