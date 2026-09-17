@@ -1,0 +1,72 @@
+// --cositt-backend-accent se fija en :root desde backend_accent.js,
+// junto con la clase marcador .o_cositt_backend_accent_active en
+// <html> — SOLO cuando hay color configurado (ver
+// ir_http.py/session_info).
+//
+// Bug real encontrado en verificación manual (no en tests ni en el
+// primer code review): un primer diseño ponía estas reglas sueltas,
+// sin la clase marcador, confiando en que "var() sin fallback = regla
+// inerte". Eso es cierto para una propiedad NORMAL (background-color:
+// var(--x)), pero NO para este caso de doble indirección: aquí se
+// reasigna una custom property de Bootstrap (--btn-bg) a OTRA custom
+// property (--cositt-backend-accent) que puede estar sin definir. La
+// cascada ya decide qué declaración de --btn-bg "gana" (la de este
+// módulo, por cargarse después) ANTES de comprobar si su valor es
+// válido — así que aunque el valor resulte inválido, NO cae de vuelta
+// a la declaración de Bootstrap que perdió esa cascada: --btn-bg queda
+// "garantizado inválido", y background-color (que la consume sin
+// fallback) cae a su valor inicial, transparent. Resultado real
+// verificado: con el módulo desactivado, TODOS los botones primarios
+// del backend quedaban invisibles. Mismo problema con
+// --NavBar-entry-*--active.
+//
+// Fix: envolver TODAS las reglas bajo la clase marcador, para que la
+// regla entera (no solo su valor) deje de existir en la cascada cuando
+// está desactivado — Bootstrap nunca pierde nada porque nuestra regla
+// ni siquiera coincide con el elemento.
+.o_cositt_backend_accent_active {
+    // Botones primarios: Bootstrap 5 no pinta .btn-primary con colores
+    // fijos, expone custom properties por componente en la propia
+    // regla .btn-primary (mixin button-variant,
+    // bootstrap/scss/mixins/_buttons.scss) que la clase base .btn ya
+    // consume. Ojo con el nombre: Odoo compila Bootstrap con su propio
+    // $prefix (sin "bs-") — verificado en el CSS real servido
+    // (`.btn-primary { --btn-bg: #6b3e66; ... }`, nunca --bs-btn-bg).
+    // --btn-active-color (texto en :active) se deja sin tocar a
+    // propósito, solo fondo/borde.
+    .btn-primary {
+        --btn-bg: var(--cositt-backend-accent);
+        --btn-border-color: var(--cositt-backend-accent);
+        --btn-hover-bg: var(--cositt-backend-accent);
+        --btn-hover-border-color: var(--cositt-backend-accent);
+        --btn-active-bg: var(--cositt-backend-accent);
+        --btn-active-border-color: var(--cositt-backend-accent);
+    }
+
+    // Ítem de menú activo del navbar: --NavBar-entry-*--active se
+    // consumen con var(..., fallback) en
+    // web/static/src/webclient/navbar/navbar.scss — PERO
+    // web_enterprise (instalado en este proyecto, confirmado en
+    // code review) fija estas mismas variables con valores FIJOS
+    // directamente sobre .o_main_navbar
+    // (web_enterprise/static/src/webclient/navbar/navbar.scss),
+    // incondicionalmente. Un elemento (.o_main_navbar) siempre gana
+    // sobre :root para esas variables, sin importar el orden de
+    // carga — mismo tipo de bug ya documentado en
+    // cositt_login_background ("web_enterprise pisaba el fondo").
+    // Por eso se ancla aquí también a .o_main_navbar, no solo a
+    // :root, para ganar esa pelea de especificidad de verdad.
+    .o_main_navbar {
+        --NavBar-entry-backgroundColor--active: var(--cositt-backend-accent);
+        --NavBar-entry-color--active: var(--cositt-backend-accent);
+    }
+
+    // Checkboxes/radios: accent-color es una propiedad CSS nativa del
+    // navegador: su valor inicial es "auto", así que aunque quedara
+    // sin definir no rompería nada — pero se mantiene bajo la misma
+    // clase marcador por consistencia con el resto del archivo.
+    input[type="checkbox"],
+    input[type="radio"] {
+        accent-color: var(--cositt-backend-accent);
+    }
+}

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.cositt.backend.accent</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Cositt - Backend" string="Cositt - Backend" name="cositt_backend_accent"
+                     groups="base.group_system">
+                    <block title="Color de acento del backend" name="cositt_backend_accent_setting_container">
+                        <setting id="cositt_backend_accent_setting"
+                                 help="Botones primarios, checkboxes/radios y el ítem de menú activo. No afecta a /web/login ni al frontend.">
+                            <field name="cositt_backend_accent_enabled"/>
+                            <div class="content-group" invisible="not cositt_backend_accent_enabled">
+                                <div class="row mt16">
+                                    <label for="cositt_backend_accent_color" string="Color de acento" class="col-lg-3 o_light_label"/>
+                                    <field name="cositt_backend_accent_color" placeholder="#1a2b3c"/>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>
