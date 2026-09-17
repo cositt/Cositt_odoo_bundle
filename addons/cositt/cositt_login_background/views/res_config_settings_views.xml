@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.cositt.login.background</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <!-- name propio (distinto de cositt_home_wallpaper) a
+                     propósito: este módulo es instalable de forma
+                     independiente, sin depender de que exista el
+                     bloque "Cositt" de otro módulo Cositt. Si ambos
+                     están instalados aparecen dos pestañas (una por
+                     módulo) — cosmético, documentado en el README. -->
+                <app data-string="Cositt - Login" string="Cositt - Login" name="cositt_login_background"
+                     groups="base.group_system">
+                    <block title="Fondo de la pantalla de login" name="cositt_login_bg_setting_container">
+                        <setting id="cositt_login_bg_setting"
+                                 help="Solo afecta a la pantalla de login (/web/login), no al resto del backend ni del frontend. Funciona en Community y Enterprise.">
+                            <field name="cositt_login_bg_enabled"/>
+                            <div class="content-group" invisible="not cositt_login_bg_enabled">
+                                <div class="row mt16">
+                                    <label for="cositt_login_bg_image" class="col-lg-3 o_light_label"/>
+                                    <field name="cositt_login_bg_image" widget="image" class="oe_avatar" options="{'size': [0, 200]}"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label for="cositt_login_bg_color" string="Color de fondo" class="col-lg-3 o_light_label"/>
+                                    <field name="cositt_login_bg_color" placeholder="#1a2b3c"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label for="cositt_login_bg_fit" class="col-lg-3 o_light_label"/>
+                                    <field name="cositt_login_bg_fit"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label for="cositt_login_bg_position" class="col-lg-3 o_light_label"/>
+                                    <field name="cositt_login_bg_position"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label for="cositt_login_bg_overlay" class="col-lg-3 o_light_label"/>
+                                    <field name="cositt_login_bg_overlay"/> %
+                                </div>
+                                <div class="row mt8">
+                                    <label for="cositt_login_bg_blur" class="col-lg-3 o_light_label"/>
+                                    <field name="cositt_login_bg_blur"/> px
+                                </div>
+                                <div class="row mt16">
+                                    <button name="action_cositt_reset_login_bg"
+                                            type="object"
+                                            string="Restablecer apariencia"
+                                            class="btn-secondary"
+                                            confirm="Esto desactivará el fondo de login y eliminará la imagen subida. ¿Continuar?"/>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>

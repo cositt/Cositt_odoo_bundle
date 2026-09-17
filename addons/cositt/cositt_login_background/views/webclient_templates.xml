@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Ancla en web.layout (la plantilla RAÍZ, la única que genera el
+         único <html> de cada respuesta) y NO en web.login_layout como
+         en un primer intento. Motivo, encontrado en verificación real
+         en navegador (no una suposición, ver commit): web_enterprise
+         (web_enterprise/views/webclient_templates.xml, template
+         "webclient_login") hereda TAMBIÉN web.login_layout y hace
+         `t-set="body_classname"` de forma INCONDICIONAL después de la
+         nuestra — "el último t-set gana" en QWeb, así que nuestra
+         clase quedaba pisada en cuanto Enterprise está instalado
+         (siempre, en este proyecto). Peor aún: el módulo `website`
+         (web/../website/views/website_templates.xml, template
+         "login_layout", priority="20") hace un `position="replace"`
+         de TODO el `<t t-call="web.frontend_layout">` interno de
+         web.login_layout — si `website` llega a instalarse, cualquier
+         xpath nuestro apuntando dentro de ese `t-call` (como el
+         intento anterior) dejaría de encontrar su nodo y Odoo
+         reventaría al cargar el registro (xpath target not found),
+         rompiendo la base entera, no solo esta función.
+
+         web.layout, en cambio, es la plantilla más estable de todo
+         Odoo (todo — backend, portal, website, login — converge en su
+         único <html>/<head>/<body>); ningún módulo de este entorno la
+         reemplaza ni le toca el <body>. Por eso el filtro de alcance
+         aquí NO es "en qué plantilla estoy" (frágil, como se acaba de
+         ver) sino la ruta HTTP real: `request.httprequest.path`,
+         disponible sin pasarlo explícitamente (odoo/http.py:
+         Request.render inyecta `self.qcontext['request'] = request`
+         en cada render). No se toca el controlador Home.web_login. -->
+    <template id="layout_login_background" inherit_id="web.layout">
+
+        <xpath expr="//head/t[@t-out]" position="after">
+            <t t-set="cositt_login_bg_scope"
+               t-value="request.httprequest.path in ('/web/login', '/web/login_successful')"/>
+            <t t-set="cositt_login_bg"
+               t-value="request.env.company._cositt_get_login_bg_config() if cositt_login_bg_scope else {'enabled': False}"/>
+            <!-- En &lt;head&gt;, antes de pintar &lt;body&gt; — cero
+                 parpadeo, sin JS ni RPC. Todos los valores ya vienen
+                 mapeados a CSS válido desde
+                 _cositt_get_login_bg_config(); esta plantilla solo
+                 interpola.
+
+                 t-out (NO t-esc/t-raw: t-esc está deprecado en esta
+                 versión de Odoo, y t-raw también) sobre valores que
+                 _cositt_get_login_bg_config() ya envuelve en Markup()
+                 — necesario porque &lt;style&gt; es "raw text" en HTML
+                 (el navegador no decodifica entidades ahí). Con
+                 escapado normal, las comillas de css_image se
+                 convertían en &amp;#34; literal DENTRO del CSS y
+                 rompían el url(...) — bug real, encontrado al
+                 verificar en navegador que la imagen no cargaba
+                 aunque toda la configuración era correcta. -->
+            <t t-if="cositt_login_bg.get('enabled')">
+                <style>
+                    #o_cositt_login_bg {
+                        --cositt-login-bg-image: <t t-out="cositt_login_bg['css_image']"/>;
+                        --cositt-login-bg-color: <t t-out="cositt_login_bg['color']"/>;
+                        --cositt-login-bg-size: <t t-out="cositt_login_bg['css_size']"/>;
+                        --cositt-login-bg-position: <t t-out="cositt_login_bg['css_position']"/>;
+                        --cositt-login-bg-blur: <t t-out="cositt_login_bg['blur']"/>px;
+                        --cositt-login-bg-overlay: <t t-out="cositt_login_bg['overlay_ratio']"/>;
+                    }
+                </style>
+            </t>
+        </xpath>
+
+        <!-- Div propia (id único, nunca reutilizado por otro módulo)
+             en vez de una clase en &lt;body&gt;: así no participa en
+             absoluto del juego de "quién hizo el último t-set" que
+             causó el bug con web_enterprise. Los pseudo-elementos
+             ::before/::after de esta div, con position:fixed, cubren
+             el viewport completo igual que si vivieran en &lt;body&gt;
+             (position:fixed se calcula contra el viewport, no contra
+             el elemento que genera el pseudo-elemento) — verificado
+             en navegador real tras este cambio. -->
+        <xpath expr="//body/t[@t-out='0']" position="before">
+            <t t-if="cositt_login_bg.get('enabled')">
+                <div id="o_cositt_login_bg"/>
+            </t>
+        </xpath>
+
+    </template>
+</odoo>

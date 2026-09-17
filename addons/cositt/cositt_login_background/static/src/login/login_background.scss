@@ -1,0 +1,41 @@
+// Selector propio por id (#o_cositt_login_bg), NUNCA una clase en
+// <body>: se comprobó en navegador real que web_enterprise pisa
+// body_classname de web.login_layout con su propio t-set incondicional
+// (el "último t-set gana" en QWeb) — una clase añadida a body ahí se
+// perdía en cuanto Enterprise estaba instalado. El div con este id lo
+// inserta directamente views/webclient_templates.xml (inherit_id
+// web.layout, la plantilla raíz) solo cuando la ruta HTTP es
+// /web/login o /web/login_successful y el fondo está activo — nunca
+// en Home Menu, formularios, listas, kanban, POS, website ni portal.
+//
+// position: fixed en los pseudo-elementos (no absolute): se calculan
+// contra el viewport, no contra el elemento que los genera, así que
+// cubren toda la pantalla igual que si vivieran en <body> — verificado
+// en navegador real. Evita que el fondo se desplace si el contenido
+// necesita scroll en pantallas pequeñas.
+#o_cositt_login_bg {
+    &::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -2;
+        margin: calc(-1 * var(--cositt-login-bg-blur, 0px));
+        background-color: var(--cositt-login-bg-color, transparent);
+        background-image: var(--cositt-login-bg-image, none);
+        background-size: var(--cositt-login-bg-size, cover);
+        background-position: var(--cositt-login-bg-position, center center);
+        background-repeat: no-repeat;
+        filter: blur(var(--cositt-login-bg-blur, 0px));
+    }
+
+    // Overlay semitransparente, por encima de la imagen pero por
+    // debajo de la tarjeta de login — mantiene el formulario legible
+    // sobre cualquier imagen.
+    &::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background-color: rgba(0, 0, 0, var(--cositt-login-bg-overlay, 0));
+    }
+}
