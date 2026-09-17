@@ -497,3 +497,192 @@ umbral 10 y stock 0 → "Is Low Stock" se activa al momento (onchange en
 vivo); cron ejecutado a mano sobre datos reales → actividad "Low stock:
 Producto Test Stock (0.0 available, threshold 10.0)" creada y asignada
 correctamente. Registro de prueba borrado después.
+
+## Cositt Visual Modules 02 — cositt_login_background (cerrado)
+
+Fondo personalizado de la pantalla de login (`/web/login`), hermano de
+`cositt_home_wallpaper` pero con arquitectura muy distinta: renderizado
+100% servidor (QWeb puro, cero JS/RPC), y funciona en **Community +
+Enterprise** (la pantalla de login vive en el módulo base `web`, no en
+`web_enterprise`).
+
+**Dos bugs reales encontrados y corregidos en verificación manual en
+navegador** (ninguno detectado antes de probar de verdad, ninguno lo
+habría atrapado un test que solo mirara `_cositt_get_login_bg_config()`
+de forma aislada):
+
+1. **`web_enterprise` pisaba el fondo.** El diseño inicial heredaba
+   `web.login_layout` y añadía la clase propia vía `t-set="body_classname"`
+   aditivo. `web_enterprise/views/webclient_templates.xml` (template
+   `webclient_login`) también hereda `web.login_layout` y hace
+   `t-set="body_classname"` incondicional — "el último `t-set` gana" en
+   QWeb, así que la clase desaparecía en cuanto Enterprise está
+   instalado (siempre, en este proyecto). Confirmado en navegador:
+   `document.body.className` mostraba `o_home_menu_background` sin
+   rastro de nada propio, aunque la config estaba bien guardada en BD.
+   Peor aún, investigando el porqué: el módulo `website` (no instalado
+   aquí, pero muy común) hace `position="replace"` de TODO el
+   `<t t-call="web.frontend_layout">` interno de `web.login_layout` —
+   si se instalara, cualquier xpath apuntando ahí dentro habría hecho
+   **reventar la carga del registro entero** (xpath target not found),
+   no solo perder el fondo.
+   Fix: rediseño completo del punto de anclaje a `web.layout` (la
+   plantilla raíz, la única que genera el único `<html>` de cada
+   respuesta — nunca reemplazada por nadie), con el alcance decidido
+   por `request.httprequest.path` en vez de "en qué plantilla estoy", y
+   un `<div id="o_cositt_login_bg">` propio en vez de una clase
+   compartida en `<body>`.
+2. **`t-esc`/`t-out` corrompía la URL de la imagen.** `<style>` es
+   contenido "raw text" en HTML — el navegador no decodifica entidades
+   ahí. El escapado normal de QWeb convertía las comillas de
+   `url("...")` en `&#34;` literal DENTRO del CSS, dejando
+   `url(&#34;/web/image/...&#34;)` como texto inválido — la imagen
+   nunca cargaba aunque toda la configuración fuera correcta. Fix:
+   envolver los valores ya validados en `markupsafe.Markup()` dentro de
+   `_cositt_get_login_bg_config()` (seguro: vienen de un id entero, un
+   color ya validado por regex, o valores fijos de un diccionario
+   interno — nunca texto libre) y usar `t-out` sobre ellos.
+
+Mismo hallazgo que en `cositt_home_wallpaper` sobre WEBP y SVG con
+`fields.Image`, más uno nuevo: `odoo/tools/image.py` endurece Pillow a
+propósito (`Image.preinit()` + `Image._initialized = 2`) — dentro del
+proceso de Odoo, Pillow no puede codificar/decodificar WEBP, así que
+`image_process()` lo detecta por bytes mágicos (RIFF/WEBPVP8) y lo
+guarda sin redimensionar (mismo trato que SVG). Esto también rompió el
+primer intento de test con WEBP generado con PIL dentro del propio
+proceso de test de Odoo (`KeyError: 'WEBP'`) — solucionado con un WEBP
+real de 40×30 generado UNA VEZ fuera de Odoo y embebido como bytes
+fijos en el test.
+
+Code review (agente, antes del rediseño de arquitectura) encontró 1
+HIGH real y aceptado como limitación documentada (no arreglado, fuera
+de alcance a propósito): `request.env.company` para un visitante
+anónimo de `/web/login` resuelve siempre a `base.public_user.company_id`
+(fijado al alta de la base, nunca cambia solo), no a una compañía
+elegida en el momento del login — en multiempresa real, todas las
+visitas anónimas verían siempre el fondo de la MISMA compañía.
+Documentado en el docstring de `_cositt_get_login_bg_config()` y en el
+README. Los MEDIUM del mismo review (falta de README/manual, falta de
+test de imagen servida a anónimo real, falta de test de que el fondo no
+se cuele en el backend) sí se corrigieron.
+
+27 tests (unitarios + `HttpCase` reales contra `/web/login`,
+`/web/login_successful` y `/odoo` autenticado — no solo
+`TransactionCase` aislado). Nota de proceso: hacer verificación manual
+en navegador ANTES de la tanda final de tests automatizados dejó
+estado (`cositt_login_bg_enabled=True` en la compañía) que rompió 2-3
+tests que asumían valores por defecto — hubo que resetear la compañía a
+mano (`UPDATE res_company ...` + borrar el `ir.attachment` de la
+imagen, que no es una columna de la tabla al ser `fields.Image` sin
+`attachment=False`) antes de la corrida limpia final. Para sesiones
+futuras: correr los tests automatizados ANTES de cualquier exploración
+manual en el mismo entorno compartido, no después.
+
+Validado en navegador real como visitante anónimo genuino (sesión de
+admin cerrada explícitamente, no solo pestaña nueva con cookie viva):
+login neutro por defecto, imagen real subida con overlay 40%/blur 4px
+aplicados correctamente y formulario legible, Inventario (backend) sin
+ningún rastro del módulo. Manual PDF generado con capturas de este
+mismo flujo.
+
+## Cositt Visual Modules 03 — cositt_kanban_ribbon_theme (cerrado)
+
+Ribbon de color en tarjetas kanban de los modelos que el admin elija,
+reusando un campo Integer existente (típicamente `color`, el mismo del
+selector de color nativo de Odoo). Config: modelo
+`cositt.kanban.ribbon.rule` (Ajustes → Técnico, mismo patrón que
+`cositt_smart_attachment_name`: `model_id` + nombre de campo + `active`,
+unicidad solo entre activas). Entrega al frontend vía `session_info()`
+(mismo patrón zero-RPC que wallpaper/login_background); aplicación vía
+`patch()` de `KanbanRecord.getRecordClasses()` — no una plantilla OWL
+heredada. CSS reusa `$o-colors` (paleta nativa de 12 colores, la misma
+del selector "Establecer color"), cero colores propios inventados.
+
+**Bug real HIGH encontrado en code review y corregido**: el diseño
+inicial leía `rule.model_id.model` directamente dentro del método que
+`session_info()` llama para CUALQUIER usuario en cada carga del
+backend. `model_id.model` es un campo de `ir.model` (otro modelo) —
+leerlo dispara una comprobación de ACL real, y el ACL base de Odoo da
+CERO acceso a `ir.model` para `base.group_user` (usuarios internos
+normales). Con una sola regla activa, `/odoo` reventaba con
+`AccessError` para todo usuario no-administrador — tumbaba el backend
+entero para ellos, no solo el kanban. Reproducido de verdad contra este
+mismo `cositt_plugins_dev` antes del fix. Corregido con un campo
+denormalizado `model_name` (`related="model_id.model", store=True`) en
+la propia regla: se calcula una vez cuando escribe un admin (que sí
+tiene acceso a `ir.model`), y `session_info()` lee ese Char normal, ya
+cubierto por el ACL de lectura abierto a `group_user` — sin `sudo()`.
+Mismo espíritu que ya seguían wallpaper/login_background (construir
+`session_info()` sobre algo ya legible por todos), pero esta vez el
+"algo" era un modelo restringido y hubo que denormalizar para lograrlo.
+
+Otros hallazgos del mismo review, corregidos:
+- Índice de color negativo: `getColorIndex()` del core usa `%` nativo
+  de JS (conserva el signo) — un campo Integer legítimamente negativo
+  daría una clase CSS que no coincide con nada (`o_colorlist_item_color_-3`),
+  ribbon invisible en vez de mostrar color. Normalizado a módulo
+  verdadero en el JS.
+- Aislamiento de tests: varios asumían base de datos limpia
+  (`search([])` sin filtrar) — en este entorno de dev compartido con
+  verificación manual, eso rompía tests con datos de sesiones
+  anteriores (5/14 fallaban así en la corrida del reviewer). Reescritos
+  para trabajar sobre el recordset propio de cada registro creado.
+- Comentario impreciso sobre modo oscuro (decía que `$o-colors` se
+  redefine ahí; no es así — corregido para explicar la razón real de
+  la consistencia: el propio indicador nativo tampoco lo ajusta).
+- `position: relative` redundante en el SCSS (ya lo trae
+  `.o_kanban_record` del core) — eliminado.
+- Documentadas como limitación (no resueltas, fuera de alcance): una
+  regla sobre un campo que la vista kanban de destino no carga no
+  muestra error, simplemente no aparece; una regla sobre un campo que
+  luego se elimina del modelo queda inactiva en la práctica sin aviso.
+
+16 tests (incluye regresión HTTP real del bug HIGH: usuario interno
+nuevo, no admin, con una regla activa, `/odoo` responde 200 en vez de
+500). Validado en navegador real: regla creada para `project.task`,
+tarea de prueba con color asignado vía el selector nativo → ribbon
+visible con el color correcto; kanban de Inventario (sin regla) sin
+ningún cambio. Datos de prueba borrados después, base dev limpia.
+
+## Cositt Visual Modules 04 — cositt_report_watermark (cerrado)
+
+Marca de agua de texto configurable (texto/opacidad/rotación, por
+compañía en `res.company`) en TODOS los reportes PDF. Ancla en
+`web.report_layout` (la plantilla raíz de cualquier reporte QWeb-PDF,
+investigado antes de escribir código) — cobertura total sin tocar
+reportes individuales ni variantes de encabezado/pie (standard/boxed/
+bold...). Pintado con un único `<div position:fixed>`: comportamiento
+documentado de wkhtmltopdf donde un fixed dentro de `<body>` se repite
+en todas las páginas, sin necesitar el mecanismo de header/footer que
+usa Odoo para `report_header`/`report_footer`. Arquitectura más simple
+que los otros dos módulos visuales: `env` está disponible directo en
+cualquier render de reporte QWeb (verificado en el propio core), sin
+`session_info()` ni sesión HTTP de por medio — así que la clase de bug
+ACL que apareció en `cositt_kanban_ribbon_theme` no aplica aquí.
+
+Hallazgo real de infraestructura (no bug): Odoo salta wkhtmltopdf en
+modo test a propósito (`_pre_render_qweb_pdf`, `test_enable and not
+force_report_rendering`) y devuelve HTML en su lugar — el test que
+verifica el PDF real necesitó `with_context(force_report_rendering=True)`
+para forzar el binario de verdad. Reporte usado para probar: el propio
+`base.report_irmodulereference` (sin depender de `account`, bloqueado
+en este entorno).
+
+17/17 tests, incluye un render real contra wkhtmltopdf (PDF válido
+`%PDF` generado con el texto presente). Confirmado visualmente que el
+texto de marca de agua aparece en el HTML/PDF servido real. Sesión
+cerrada con presupuesto de contexto ajustado — verificación visual del
+PDF final (rotación/centrado exactos) quedó apoyada en el HTML
+intermedio + generación real del binario, no en una captura del PDF ya
+renderizado en el visor de Chrome (que no cargaba de forma fiable en
+las capturas); recomendable que el usuario haga una revisión visual
+rápida del PDF real la próxima vez que lo use.
+
+## Estado de la ronda "Cositt Visual Modules": 4/4 completos
+
+`cositt_home_wallpaper`, `cositt_login_background`,
+`cositt_kanban_ribbon_theme`, `cositt_report_watermark` — los 3 últimos
+completados en una misma sesión larga, cada uno con al menos un bug
+real encontrado en verificación manual o code review (nunca solo en
+tests aislados) y corregido antes de cerrar. Pendiente de commit (no se
+hace commit salvo petición explícita del usuario).

@@ -37,16 +37,21 @@ de 12. Completa (13 → 17).
 
 ## Cositt Visual Modules
 
-Ronda de módulos que tocan la interfaz visual del backend (frontend
-OWL/SCSS), fuera de las dos series anteriores.
+Ronda de módulos que tocan la interfaz visual del backend/frontend
+(QWeb/OWL/SCSS), fuera de las dos series anteriores.
 
-| # | Módulo | Descripción | Estado |
-|---|--------|-------------|--------|
-| 1 | [`cositt_home_wallpaper`](./addons/cositt/cositt_home_wallpaper) | Fondo personalizado del Home Menu (imagen, color, overlay, blur) | Listo |
+| # | Módulo | Descripción | Requiere | Estado |
+|---|--------|-------------|----------|--------|
+| 1 | [`cositt_home_wallpaper`](./addons/cositt/cositt_home_wallpaper) | Fondo personalizado del Home Menu (imagen, color, overlay, blur) | Enterprise | Listo |
+| 2 | [`cositt_login_background`](./addons/cositt/cositt_login_background) | Fondo personalizado de la pantalla de login (imagen, color, overlay, blur) | Community + Enterprise | Listo |
+| 3 | [`cositt_kanban_ribbon_theme`](./addons/cositt/cositt_kanban_ribbon_theme) | Ribbon de color en tarjetas kanban de los modelos que elijas (reusa la paleta nativa) | Community + Enterprise | Listo |
+| 4 | [`cositt_report_watermark`](./addons/cositt/cositt_report_watermark) | Marca de agua de texto configurable en todos los reportes PDF | Community + Enterprise | Listo |
 
-Requiere **Odoo Enterprise** (el Home Menu de pantalla completa no
-existe en Community — ver el README del propio módulo para el porqué,
-investigado en el código fuente antes de construirlo).
+`cositt_home_wallpaper` requiere **Odoo Enterprise** (el Home Menu de
+pantalla completa no existe en Community — ver el README del propio
+módulo para el porqué, investigado en el código fuente antes de
+construirlo). `cositt_login_background` funciona en Community puro (la
+pantalla de login vive en el módulo base `web`, no en `web_enterprise`).
 
 Cada módulo es independiente (`__manifest__.py` propio) e instalable por
 separado — el mono-repo no implica instalarlos todos juntos. Detalle de
