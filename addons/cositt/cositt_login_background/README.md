@@ -3,7 +3,10 @@
 ## Qué hace
 
 Personaliza la pantalla de login de Odoo (`/web/login`) con una imagen
-de fondo corporativa, color, overlay y desenfoque configurables.
+de fondo corporativa, color, overlay y desenfoque configurables, más
+dos campos de "branding" añadidos en una ronda posterior: un mensaje
+de bienvenida corto y un color de acento para el botón/enlaces del
+formulario. Todo bajo un único interruptor de activación.
 
 ## Problema que resuelve
 
@@ -103,6 +106,54 @@ diccionario interno) y usando `t-out` sobre ellos. Test de regresión:
 `test_login_page_shows_background_when_enabled` comprueba la comilla
 real en la respuesta HTTP y que `&#34;` no aparece.
 
+## Branding: mensaje de bienvenida y color de acento
+
+Añadido en una ronda posterior (ver backlog "Visual Modules" del README
+raíz, ítem #5 `cositt_login_branding`) — se decidió extender este
+módulo en vez de crear uno nuevo, por el solapamiento evidente con el
+fondo ya existente.
+
+- **`cositt_login_bg_message`** (Char, máx. 140 caracteres): se ancla
+  en `oe_structure_login_top`, el punto de extensión nativo que el
+  propio `web.login` ya declara para esto (`<div id=
+  "oe_structure_login_top"/>`, investigado en el código fuente antes de
+  escribir el xpath) — a diferencia del fondo, no hace falta anclar en
+  `web.layout` ni filtrar por `request.httprequest.path`, porque
+  `web.login` solo se renderiza en `/web/login`. Se interpola con
+  `t-esc` (escapado normal), NUNCA `Markup()`: es texto libre escrito
+  por un admin, a diferencia de `css_image`/`color`/`accent_color`, que
+  sí se marcan `Markup()` porque están validados como URL interna o hex
+  estricto antes de interpolarse dentro de un `<style>` (raw text en
+  HTML, donde el escapado normal rompería la sintaxis en vez de
+  protegerla — ver el bug real documentado más abajo). Verificado con
+  un payload `<script>alert(1)</script>` real contra `/web/login`: sale
+  como `&lt;script&gt;...` en el HTML servido, nunca ejecutable.
+- **`cositt_login_bg_accent_color`** (Char hex `#rrggbb`, mismo regex
+  que `cositt_login_bg_color`): se inyecta como variable CSS
+  `--cositt-login-accent` en `:root` (NO en `#o_cositt_login_bg`, que
+  es donde viven las demás variables del fondo) — el botón/enlaces del
+  formulario de login están fuera de ese div en el DOM (confirmado
+  contra el HTML real servido: `#o_cositt_login_bg` es hermano de
+  `#wrapwrap`, no ancestro), y las custom properties CSS solo cascan a
+  descendientes. `login_background.scss` consume la variable SIN
+  fallback (`var(--cositt-login-accent)`, no `var(--cositt-login-accent,
+  algúnColor)`) a propósito: una custom property sin definir hace que
+  el navegador descarte esas declaraciones por "inválidas en tiempo de
+  cómputo" y caiga de vuelta en las reglas propias de Bootstrap — cero
+  cambio visual sin configurar, sin tener que duplicar aquí el color
+  primario nativo de Odoo (que además podría cambiar de versión en
+  versión).
+- **Mismo interruptor que el fondo** (`cositt_login_bg_enabled`,
+  reetiquetado a "Personalización de login activa" precisamente por
+  esto): mensaje y color de acento NO aparecen si el interruptor
+  general está desactivado, aunque los campos tengan valor guardado en
+  BD — comportamiento deliberado (una sola casilla que gobierna toda la
+  personalización de login de este módulo, no tres independientes), no
+  un bug de wiring. El nombre técnico del campo
+  (`cositt_login_bg_enabled`) se mantuvo tal cual del diseño original
+  para no forzar una migración de datos sin necesidad real; solo se
+  cambió el `string`/`help` visibles.
+
 ## Dónde vive la configuración
 
 - **Por compañía** (`res.company`), mismo patrón que
@@ -135,7 +186,8 @@ nunca el de otra, aunque cada una tenga su propia configuración
 guardada. Resolverlo de verdad exigiría detección de compañía por
 dominio/subdominio (terreno de `website`, fuera de alcance a
 propósito). Documentado como limitación conocida del MVP, encontrada en
-code review, no un bug oculto.
+code review, no un bug oculto. Aplica igual a mensaje y color de
+acento: son parte del mismo `_cositt_get_login_bg_config()`.
 
 ## Configuración
 
@@ -144,12 +196,15 @@ code review, no un bug oculto.
 independiente, sin depender de que el otro esté presente; si ambos
 están instalados aparecen dos pestañas "Cositt" — cosmético):
 
-1. Activa **"Fondo de login activo"**.
-2. Sube una imagen (JPG, PNG o WEBP).
+1. Activa **"Personalización de login activa"**.
+2. Sube una imagen (JPG, PNG o WEBP) — opcional.
 3. Ajusta color de respaldo, ajuste de imagen, posición, oscurecimiento
-   y desenfoque a tu gusto.
-4. **"Restablecer apariencia"** desactiva el fondo, borra la imagen y
-   restaura los valores por defecto (pide confirmación).
+   y desenfoque a tu gusto — todos opcionales.
+4. Escribe un mensaje de bienvenida (máx. 140 caracteres) y/o un color
+   de acento (`#rrggbb`) — opcionales, independientes de la imagen.
+5. **"Restablecer apariencia"** desactiva la personalización, borra la
+   imagen/mensaje/color y restaura los valores por defecto (pide
+   confirmación).
 
 ## Uso
 
@@ -175,10 +230,15 @@ autenticación) — el resto del backend y del frontend no cambia.
   misma pantalla.
 - **Sin `sudo()`** en ningún punto del módulo (verificado por su propio
   test `test_module_never_calls_sudo`).
-- El color se valida contra un formato hexadecimal estricto
-  (`#rrggbb`); el resto de valores interpolados en el `<style>` vienen
-  de un id entero o de diccionarios internos de valores fijos — nunca
-  de texto libre sin validar.
+- El color (y el color de acento, mismo regex) se validan contra un
+  formato hexadecimal estricto (`#rrggbb`); el resto de valores
+  interpolados en el `<style>` vienen de un id entero o de diccionarios
+  internos de valores fijos — nunca de texto libre sin validar.
+- El mensaje de bienvenida SÍ es texto libre (nombre del admin, sin
+  restricción de caracteres más allá del límite de 140) — por eso es el
+  único valor de `_cositt_get_login_bg_config()` que se interpola con
+  `t-esc` (escapado) en vez de `Markup()`. Verificado con un payload
+  `<script>` real contra `/web/login`: sale escapado, no ejecutable.
 
 ## Limitaciones
 
@@ -209,3 +269,10 @@ verificación (no supuestos): el pisado de `body_classname` por
 `web_enterprise`, y la corrupción de `url(...)` por el escapado HTML de
 `t-esc` dentro de `<style>` — ambos documentados arriba con su fix y su
 test de regresión.
+
+**Ronda de branding (mensaje + acento)**: 37/37 tests (unitarios +
+HTTP reales, incluye el payload `<script>` contra `/web/login`
+verificando escapado real, no solo el mock del test). Code review (1
+agente dedicado) sin CRITICAL/HIGH; corregido el único MEDIUM real
+(interruptor mal nombrado, ver sección de branding arriba) reetiquetando
+el campo sin tocar su nombre técnico ni forzar migración.

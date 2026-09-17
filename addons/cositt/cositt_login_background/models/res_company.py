@@ -42,6 +42,11 @@ MAX_LOGIN_BG_BLUR = 40
 
 COLOR_HEX_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
 
+# Una línea de eslogan, no un párrafo — el hueco de
+# #oe_structure_login_top es estrecho (tarjeta de máx. 300px, ver
+# web.login_layout). Límite generoso para ese espacio real.
+MAX_LOGIN_BG_MESSAGE_LENGTH = 140
+
 FIT_TO_CSS_SIZE = {
     "cover": "cover",
     "contain": "contain",
@@ -60,10 +65,16 @@ class ResCompany(models.Model):
     _inherit = "res.company"
 
     cositt_login_bg_enabled = fields.Boolean(
-        string="Fondo de login activo",
+        string="Personalización de login activa",
         default=False,
-        help="Mientras esté desactivado, la pantalla de login se ve "
-        "exactamente igual que sin este módulo instalado.",
+        help="Interruptor único para todo lo que personaliza este módulo "
+        "en /web/login: imagen de fondo, color, mensaje de bienvenida y "
+        "color de acento. Mientras esté desactivado, la pantalla de "
+        "login se ve exactamente igual que sin este módulo instalado. "
+        "El nombre técnico del campo (cositt_login_bg_enabled) quedó "
+        "del diseño original, cuando el módulo solo cubría el fondo — "
+        "no se renombró para no forzar una migración de datos sin "
+        "necesidad real; ver README.",
     )
     cositt_login_bg_image = fields.Image(
         string="Imagen de fondo de login",
@@ -108,6 +119,19 @@ class ResCompany(models.Model):
         string="Posición de login",
         default="center",
     )
+    cositt_login_bg_message = fields.Char(
+        string="Mensaje de bienvenida de login",
+        help="Texto corto mostrado encima del formulario de login (p.ej. "
+        'un eslogan). Se inserta en el punto de extensión nativo '
+        '"oe_structure_login_top" de web.login — vacío por defecto, no '
+        "aparece nada.",
+    )
+    cositt_login_bg_accent_color = fields.Char(
+        string="Color de acento de login",
+        help="Color hexadecimal (#rrggbb) para el botón y enlaces del "
+        "formulario de login. Vacío por defecto: se ven con el color "
+        "estándar de Odoo (azul).",
+    )
 
     @api.constrains("cositt_login_bg_image")
     def _check_cositt_login_bg_image(self):
@@ -141,6 +165,29 @@ class ResCompany(models.Model):
                     "hexadecimal #rrggbb (ej. #1a2b3c)."
                 ) % color)
 
+    @api.constrains("cositt_login_bg_accent_color")
+    def _check_cositt_login_bg_accent_color(self):
+        for company in self:
+            color = company.cositt_login_bg_accent_color
+            if color and not COLOR_HEX_RE.match(color):
+                raise ValidationError(_(
+                    'Color de acento no válido: "%s". Usa el formato '
+                    "hexadecimal #rrggbb (ej. #1a2b3c)."
+                ) % color)
+
+    @api.constrains("cositt_login_bg_message")
+    def _check_cositt_login_bg_message_length(self):
+        for company in self:
+            message = company.cositt_login_bg_message
+            if message and len(message) > MAX_LOGIN_BG_MESSAGE_LENGTH:
+                raise ValidationError(_(
+                    "El mensaje de bienvenida no puede superar "
+                    "%(limit)s caracteres (actual: %(length)s)."
+                ) % {
+                    "limit": MAX_LOGIN_BG_MESSAGE_LENGTH,
+                    "length": len(message),
+                })
+
     @api.constrains("cositt_login_bg_overlay")
     def _check_cositt_login_bg_overlay(self):
         for company in self:
@@ -166,6 +213,8 @@ class ResCompany(models.Model):
             "cositt_login_bg_blur": 0,
             "cositt_login_bg_fit": "cover",
             "cositt_login_bg_position": "center",
+            "cositt_login_bg_message": False,
+            "cositt_login_bg_accent_color": False,
         })
         return True
 
@@ -222,4 +271,16 @@ class ResCompany(models.Model):
             )),
             "blur": self.cositt_login_bg_blur,
             "overlay_ratio": (self.cositt_login_bg_overlay or 0) / 100,
+            # "message" NUNCA se marca Markup: a diferencia de
+            # css_image/color/accent_color (validados como URL interna
+            # o hex estricto), este es texto libre escrito por un admin
+            # — se interpola con t-esc (auto-escapado normal) en
+            # views/webclient_templates.xml, no dentro de un <style>,
+            # así que el escapado normal es correcto aquí y evitar
+            # Markup es justo lo que lo mantiene seguro.
+            "message": self.cositt_login_bg_message or False,
+            "accent_color": (
+                Markup(self.cositt_login_bg_accent_color)
+                if self.cositt_login_bg_accent_color else False
+            ),
         }

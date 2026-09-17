@@ -25,6 +25,12 @@ class ResConfigSettings(models.TransientModel):
     cositt_login_bg_position = fields.Selection(
         related="company_id.cositt_login_bg_position", readonly=False
     )
+    cositt_login_bg_message = fields.Char(
+        related="company_id.cositt_login_bg_message", readonly=False
+    )
+    cositt_login_bg_accent_color = fields.Char(
+        related="company_id.cositt_login_bg_accent_color", readonly=False
+    )
 
     def action_cositt_reset_login_bg(self):
         self.ensure_one()

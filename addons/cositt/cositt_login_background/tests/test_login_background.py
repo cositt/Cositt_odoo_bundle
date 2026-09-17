@@ -76,6 +76,8 @@ class TestCosittLoginBackground(TransactionCase):
         self.assertEqual(company.cositt_login_bg_blur, 0)
         self.assertEqual(company.cositt_login_bg_fit, "cover")
         self.assertEqual(company.cositt_login_bg_position, "center")
+        self.assertFalse(company.cositt_login_bg_message)
+        self.assertFalse(company.cositt_login_bg_accent_color)
 
     def test_config_reports_disabled_by_default(self):
         config = self.company._cositt_get_login_bg_config()
@@ -120,6 +122,40 @@ class TestCosittLoginBackground(TransactionCase):
         self.company.cositt_login_bg_enabled = True
         config = self.company._cositt_get_login_bg_config()
         self.assertEqual(config["color"], "transparent")
+
+    # --- branding: mensaje + color de acento (login_branding) ----------
+
+    def test_config_message_and_accent_absent_by_default_when_enabled(self):
+        self.company.cositt_login_bg_enabled = True
+        config = self.company._cositt_get_login_bg_config()
+        self.assertFalse(config["message"])
+        self.assertFalse(config["accent_color"])
+
+    def test_config_includes_message_and_accent_when_set(self):
+        self.company.write({
+            "cositt_login_bg_enabled": True,
+            "cositt_login_bg_message": "Bienvenido a Cositt",
+            "cositt_login_bg_accent_color": "#ff6600",
+        })
+        config = self.company._cositt_get_login_bg_config()
+        self.assertEqual(config["message"], "Bienvenido a Cositt")
+        self.assertEqual(config["accent_color"], "#ff6600")
+
+    def test_message_too_long_is_rejected(self):
+        with self.assertRaises(ValidationError):
+            self.company.cositt_login_bg_message = "x" * 141
+
+    def test_message_boundary_length_is_accepted(self):
+        self.company.cositt_login_bg_message = "x" * 140
+        self.assertEqual(len(self.company.cositt_login_bg_message), 140)
+
+    def test_invalid_accent_color_format_is_rejected(self):
+        with self.assertRaises(ValidationError):
+            self.company.cositt_login_bg_accent_color = "orange"
+
+    def test_valid_accent_color_format_is_accepted(self):
+        self.company.cositt_login_bg_accent_color = "#ABCDEF"
+        self.assertEqual(self.company.cositt_login_bg_accent_color, "#ABCDEF")
 
     # --- validaciones ----------------------------------------------------
 
@@ -194,6 +230,8 @@ class TestCosittLoginBackground(TransactionCase):
             "cositt_login_bg_blur": 20,
             "cositt_login_bg_fit": "stretch",
             "cositt_login_bg_position": "bottom",
+            "cositt_login_bg_message": "Bienvenido",
+            "cositt_login_bg_accent_color": "#010203",
         })
 
         self.company.action_cositt_reset_login_bg()
@@ -205,6 +243,8 @@ class TestCosittLoginBackground(TransactionCase):
         self.assertEqual(self.company.cositt_login_bg_blur, 0)
         self.assertEqual(self.company.cositt_login_bg_fit, "cover")
         self.assertEqual(self.company.cositt_login_bg_position, "center")
+        self.assertFalse(self.company.cositt_login_bg_message)
+        self.assertFalse(self.company.cositt_login_bg_accent_color)
 
     # --- permisos: hereda el ACL/reglas ya existentes de res.company ---
 
@@ -309,6 +349,70 @@ class TestCosittLoginBackgroundHttp(HttpCase):
         response = self.url_open(path)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.content)
+
+    def test_login_page_no_message_or_accent_by_default(self):
+        # Neutro por defecto también para el branding nuevo, mismo
+        # criterio que el fondo: sin configurar, cero rastro en el HTML.
+        response = self.url_open("/web/login")
+        self.assertNotIn('id="o_cositt_login_message"', response.text)
+        self.assertNotIn("--cositt-login-accent", response.text)
+        # Regresión directa de un bug real: la regla
+        # ".oe_login_form .btn-primary { background-color: var(...) }"
+        # vivía antes en el SCSS estático (siempre presente) — un
+        # var() sin fallback ahí ganaba la cascada igual aunque su
+        # valor fuera inválido, dejando el botón "Log in" con
+        # background-color: transparent (invisible) por defecto, no el
+        # morado nativo de Odoo. Ahora la regla entera solo se
+        # renderiza cuando hay accent_color configurado (ver
+        # webclient_templates.xml) — comprobar que NO está en el HTML
+        # por defecto es la única forma de detectar esto sin un
+        # navegador real.
+        self.assertNotIn(".oe_login_form .btn-primary", response.text)
+
+    def test_login_page_accent_button_rule_absent_when_disabled_but_color_set(self):
+        # Caso más estricto: el color está guardado en BD pero el
+        # interruptor general está apagado — la regla tampoco debe
+        # aparecer (mismo gate que el resto del branding).
+        self.env.company.cositt_login_bg_accent_color = "#ff6600"
+        response = self.url_open("/web/login")
+        self.assertNotIn(".oe_login_form .btn-primary", response.text)
+
+    def test_login_page_shows_message_when_set(self):
+        self.env.company.write({
+            "cositt_login_bg_enabled": True,
+            "cositt_login_bg_message": "Bienvenido a Cositt",
+        })
+        response = self.url_open("/web/login")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('id="o_cositt_login_message"', response.text)
+        self.assertIn("Bienvenido a Cositt", response.text)
+
+    def test_login_page_message_is_html_escaped(self):
+        # El mensaje lo escribe un admin de confianza, pero se escapa
+        # igualmente en defensa: t-esc (no t-out/Markup) en la
+        # plantilla — a diferencia de css_image/color/accent_color, que
+        # SÍ se marcan Markup porque están validados como hex/URL
+        # interna, este es texto libre y nunca debe interpretarse como
+        # HTML.
+        self.env.company.write({
+            "cositt_login_bg_enabled": True,
+            "cositt_login_bg_message": "<script>alert(1)</script>",
+        })
+        response = self.url_open("/web/login")
+        self.assertNotIn("<script>alert(1)</script>", response.text)
+        self.assertIn("&lt;script&gt;", response.text)
+
+    def test_login_page_sets_accent_css_variable_when_configured(self):
+        self.env.company.write({
+            "cositt_login_bg_enabled": True,
+            "cositt_login_bg_accent_color": "#ff6600",
+        })
+        response = self.url_open("/web/login")
+        self.assertIn("--cositt-login-accent: #ff6600", response.text)
+        # La regla del botón vive en el mismo bloque condicional que la
+        # variable — si una aparece, la otra debe aparecer también.
+        self.assertIn(".oe_login_form .btn-primary", response.text)
+        self.assertIn("background-color: var(--cositt-login-accent);", response.text)
 
     def test_login_successful_page_not_broken_when_enabled(self):
         # login_successful está en el alcance documentado (interstitial

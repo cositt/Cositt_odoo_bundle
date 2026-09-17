@@ -39,3 +39,13 @@
         background-color: rgba(0, 0, 0, var(--cositt-login-bg-overlay, 0));
     }
 }
+
+// Las reglas de color de acento (botón/enlaces) NO viven aquí a
+// propósito — ver views/webclient_templates.xml para el porqué (bug
+// real: un var() sin fallback en un archivo SCSS SIEMPRE presente
+// dejaba el botón "Log in" transparente cuando no había acento
+// configurado, porque la regla ganaba la cascada igual aunque su
+// valor fuera inválido). Viven dentro del <style> renderizado por el
+// servidor, condicionado a que haya un color de acento guardado — así
+// la regla entera no existe en el HTML servido cuando está
+// desactivado, no solo su valor.

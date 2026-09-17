@@ -14,9 +14,9 @@
                      módulo) — cosmético, documentado en el README. -->
                 <app data-string="Cositt - Login" string="Cositt - Login" name="cositt_login_background"
                      groups="base.group_system">
-                    <block title="Fondo de la pantalla de login" name="cositt_login_bg_setting_container">
+                    <block title="Personalización de la pantalla de login" name="cositt_login_bg_setting_container">
                         <setting id="cositt_login_bg_setting"
-                                 help="Solo afecta a la pantalla de login (/web/login), no al resto del backend ni del frontend. Funciona en Community y Enterprise.">
+                                 help="Fondo, mensaje de bienvenida y color de acento — todo bajo un único interruptor. Solo afecta a la pantalla de login (/web/login), no al resto del backend ni del frontend. Funciona en Community y Enterprise.">
                             <field name="cositt_login_bg_enabled"/>
                             <div class="content-group" invisible="not cositt_login_bg_enabled">
                                 <div class="row mt16">
@@ -42,6 +42,14 @@
                                 <div class="row mt8">
                                     <label for="cositt_login_bg_blur" class="col-lg-3 o_light_label"/>
                                     <field name="cositt_login_bg_blur"/> px
+                                </div>
+                                <div class="row mt8">
+                                    <label for="cositt_login_bg_message" string="Mensaje de bienvenida" class="col-lg-3 o_light_label"/>
+                                    <field name="cositt_login_bg_message" placeholder="Bienvenido a..."/>
+                                </div>
+                                <div class="row mt8">
+                                    <label for="cositt_login_bg_accent_color" string="Color de acento" class="col-lg-3 o_light_label"/>
+                                    <field name="cositt_login_bg_accent_color" placeholder="#1a2b3c"/>
                                 </div>
                                 <div class="row mt16">
                                     <button name="action_cositt_reset_login_bg"

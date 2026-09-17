@@ -61,6 +61,42 @@
                         --cositt-login-bg-blur: <t t-out="cositt_login_bg['blur']"/>px;
                         --cositt-login-bg-overlay: <t t-out="cositt_login_bg['overlay_ratio']"/>;
                     }
+                    <!-- Bug real encontrado en verificación manual (no en
+                         tests ni en el primer code review): con el
+                         acento SIN configurar, .oe_login_form .btn-primary
+                         quedaba con background-color: transparent (botón
+                         "Log in" totalmente invisible), no con el morado
+                         nativo de Odoo. Causa: un var() sin segundo
+                         argumento, en una propiedad NORMAL (no una custom
+                         property intermedia), que gana la cascada por
+                         especificidad mayor, "inválido en tiempo de
+                         cómputo" NO hace que el navegador vuelva a
+                         consultar la declaración de menor especificidad
+                         que perdió esa cascada — la propiedad cae a su
+                         valor inicial (transparent), no al valor de
+                         Bootstrap. El mecanismo "sin fallback = inerte"
+                         SOLO es seguro cuando la regla entera (no solo el
+                         valor) deja de existir para el navegador — por
+                         eso este bloque, ya condicionado por
+                         t-if="accent_color" arriba, es el único lugar
+                         donde vive esta regla: sin acento configurado,
+                         la regla no se renderiza en absoluto, así que
+                         Bootstrap nunca pierde la cascada. NO vive en
+                         login_background.scss (bundle estático, siempre
+                         presente) por este motivo exacto. -->
+                    <t t-if="cositt_login_bg.get('accent_color')">
+                        :root {
+                            --cositt-login-accent: <t t-out="cositt_login_bg['accent_color']"/>;
+                        }
+                        .oe_login_form .btn-primary {
+                            background-color: var(--cositt-login-accent);
+                            border-color: var(--cositt-login-accent);
+                        }
+                        .oe_login_form a,
+                        .oe_login_buttons a {
+                            color: var(--cositt-login-accent);
+                        }
+                    </t>
                 </style>
             </t>
         </xpath>
@@ -80,5 +116,24 @@
             </t>
         </xpath>
 
+    </template>
+
+    <!-- Mensaje de bienvenida: se ancla en "oe_structure_login_top",
+         el punto de extensión nativo que el propio web.login ya
+         declara para esto (div con id fijo, pensado por el core para
+         contenido añadido por otros módulos) — no una posición
+         calculada, así que es inmune al mismo tipo de sorpresa de
+         "último t-set gana" que obligó a rediseñar el fondo. web.login
+         (a diferencia de web.layout) NO se renderiza en cualquier
+         página, solo en /web/login, así que no hace falta repetir el
+         filtro por request.httprequest.path de arriba. -->
+    <template id="login_message" inherit_id="web.login">
+        <xpath expr="//div[@id='oe_structure_login_top']" position="inside">
+            <t t-set="cositt_login_branding" t-value="request.env.company._cositt_get_login_bg_config()"/>
+            <div t-if="cositt_login_branding.get('message')"
+                 id="o_cositt_login_message" class="text-center mb-3">
+                <t t-esc="cositt_login_branding['message']"/>
+            </div>
+        </xpath>
     </template>
 </odoo>
