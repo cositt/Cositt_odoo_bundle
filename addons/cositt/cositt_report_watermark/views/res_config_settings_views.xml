@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.cositt.report.watermark</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <!-- name propio (distinto de los otros módulos Cositt
+                     visuales) a propósito: instalable de forma
+                     independiente, sin depender de que exista el
+                     bloque "Cositt" de otro módulo. -->
+                <app data-string="Cositt - Reportes" string="Cositt - Reportes" name="cositt_report_watermark"
+                     groups="base.group_system">
+                    <block title="Marca de agua en reportes PDF" name="cositt_watermark_setting_container">
+                        <setting id="cositt_watermark_setting"
+                                 help="Se aplica a TODOS los reportes PDF del sistema (facturas, presupuestos, albaranes...), sin tocar ningún reporte individual.">
+                            <field name="cositt_watermark_enabled"/>
+                            <div class="content-group" invisible="not cositt_watermark_enabled">
+                                <div class="row mt16">
+                                    <label for="cositt_watermark_text" string="Texto" class="col-lg-3 o_light_label"/>
+                                    <field name="cositt_watermark_text" placeholder="BORRADOR"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label for="cositt_watermark_opacity" class="col-lg-3 o_light_label"/>
+                                    <field name="cositt_watermark_opacity"/> %
+                                </div>
+                                <div class="row mt8">
+                                    <label for="cositt_watermark_rotation" class="col-lg-3 o_light_label"/>
+                                    <field name="cositt_watermark_rotation"/> °
+                                </div>
+                                <div class="row mt16">
+                                    <button name="action_cositt_reset_watermark"
+                                            type="object"
+                                            string="Restablecer"
+                                            class="btn-secondary"
+                                            confirm="Esto desactivará la marca de agua y restaurará los valores por defecto. ¿Continuar?"/>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>

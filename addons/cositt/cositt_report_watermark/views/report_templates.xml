@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Ancla en web.report_layout (NO en external_layout_standard/
+         boxed/bold/... ni en internal_layout/basic_layout): es la
+         plantilla RAÍZ que envuelve absolutamente todo reporte
+         QWeb-PDF, sea cual sea el estilo de encabezado/pie que la
+         compañía tenga elegido — investigado leyendo
+         web/views/report_templates.xml antes de escribir esto (mismo
+         mecanismo que web.layout para páginas HTML normales: TODO pasa
+         por un único punto). Anclar aquí en vez de en cada variante de
+         external_layout evita duplicar código y garantiza cobertura
+         total sin tener que enumerar cada estilo de branding.
+
+         El texto se pinta con position:fixed vía CSS
+         (static/src/report/report_watermark.scss) — un comportamiento
+         bien documentado de wkhtmltopdf (el motor de PDF de Odoo,
+         verificado instalado en este entorno: wkhtmltopdf 0.12.6.1):
+         un elemento fixed dentro del <body> se repite en TODAS las
+         páginas generadas, sin necesitar el mecanismo de
+         header/footer que usa Odoo para report_header/report_footer
+         (que exige dividir el HTML en nodos "header"/"footer"
+         separados antes de invocar el binario — ver
+         `_prepare_html` en ir_actions_report.py). Un solo div fixed
+         alcanza.
+
+         `env` está disponible aquí sin pasarlo explícitamente: es una
+         variable QWeb estándar en CUALQUIER render de reporte (se
+         comprobó que el propio core la usa así en este mismo archivo,
+         ej. `t-set="company" t-value="env.company"`). No se toca
+         ningún reporte individual. -->
+    <template id="report_layout_watermark" inherit_id="web.report_layout">
+        <xpath expr="//div[@id='wrapwrap']" position="before">
+            <t t-set="cositt_watermark" t-value="env.company._cositt_get_watermark_config()"/>
+            <div t-if="cositt_watermark.get('enabled')"
+                 class="o_cositt_watermark"
+                 t-attf-style="opacity: #{cositt_watermark['opacity_ratio']}; transform: translate(-50%, -50%) rotate(#{cositt_watermark['rotation']}deg);"
+                 t-out="cositt_watermark['text']"/>
+        </xpath>
+    </template>
+</odoo>

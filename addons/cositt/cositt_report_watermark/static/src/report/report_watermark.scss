@@ -1,0 +1,22 @@
+// position: fixed dentro del <body> de un reporte QWeb-PDF se repite
+// en TODAS las páginas generadas por wkhtmltopdf (comportamiento
+// documentado del motor, no un truco frágil) — un único div alcanza
+// para cubrir todo el documento, sin tocar el mecanismo de
+// header/footer que usa Odoo para report_header/report_footer.
+//
+// Estructura (posición, tamaño, tipografía) vive aquí; los valores
+// específicos de cada compañía (opacidad, rotación, texto) se
+// interpolan inline desde views/report_templates.xml — igual que el
+// resto de módulos Cositt separan "forma" de "valores".
+.o_cositt_watermark {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    z-index: 10000;
+    font-size: 6em;
+    font-weight: bold;
+    color: #808080;
+    white-space: nowrap;
+    pointer-events: none;
+    user-select: none;
+}
