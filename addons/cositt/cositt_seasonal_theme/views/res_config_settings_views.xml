@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.cositt.seasonal.theme</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Cositt - Decoración" string="Cositt - Decoración" name="cositt_seasonal_theme"
+                     groups="base.group_system">
+                    <block title="Decoración estacional del backend" name="cositt_seasonal_theme_setting_container">
+                        <setting id="cositt_seasonal_theme_setting"
+                                 help="Icono en la barra de navegación y, opcionalmente, partículas animadas (copos, flores...). No afecta a /web/login ni al frontend.">
+                            <field name="cositt_seasonal_theme_enabled"/>
+                            <div class="content-group" invisible="not cositt_seasonal_theme_enabled">
+                                <div class="row mt16">
+                                    <label for="cositt_seasonal_theme_kind" string="Tema" class="col-lg-3 o_light_label"/>
+                                    <field name="cositt_seasonal_theme_kind"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label for="cositt_seasonal_theme_label" string="Mensaje" class="col-lg-3 o_light_label"/>
+                                    <field name="cositt_seasonal_theme_label" placeholder="Opcional — se muestra al pasar el ratón por el icono" maxlength="140"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label for="cositt_seasonal_theme_animation_enabled" string="Partículas animadas" class="col-lg-3 o_light_label"/>
+                                    <field name="cositt_seasonal_theme_animation_enabled"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label for="cositt_seasonal_theme_date_start" string="Desde" class="col-lg-3 o_light_label"/>
+                                    <field name="cositt_seasonal_theme_date_start" placeholder="Sin fecha de inicio"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label for="cositt_seasonal_theme_date_end" string="Hasta" class="col-lg-3 o_light_label"/>
+                                    <field name="cositt_seasonal_theme_date_end" placeholder="Sin fecha de fin"/>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>

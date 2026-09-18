@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="cositt_seasonal_theme.SystrayIcon">
+        <div class="o_cositt_seasonal_theme_systray d-flex align-items-center px-2" t-att-title="tooltip" t-att-aria-label="tooltip" role="img">
+            <span t-esc="theme.icon" aria-hidden="true"/>
+        </div>
+    </t>
+
+</templates>

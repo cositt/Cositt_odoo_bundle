@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="cositt_seasonal_theme.Particles">
+        <div class="o_cositt_seasonal_theme_particles" aria-hidden="true">
+            <t t-foreach="particles" t-as="particle" t-key="particle_index">
+                <span t-attf-class="o_cositt_seasonal_theme_particle o_cositt_seasonal_theme_particle_{{particle.motion}} o_cositt_seasonal_theme_particle_{{particle.kind}}"
+                      t-att-style="particleStyle(particle)">
+                    <t t-if="particle.symbol" t-esc="particle.symbol"/>
+                </span>
+            </t>
+        </div>
+    </t>
+
+</templates>

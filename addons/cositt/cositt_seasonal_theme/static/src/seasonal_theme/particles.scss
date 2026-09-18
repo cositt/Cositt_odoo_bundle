@@ -1,0 +1,83 @@
+// Overlay decorativo de viewport completo. pointer-events:none en el
+// contenedor y en cada partícula: nunca debe interceptar un clic, pase
+// lo que pase con el z-index. z-index bajo a propósito (por encima del
+// contenido normal en flujo, que no declara z-index propio, pero muy
+// por debajo de cualquier UI funcional real: dropdowns 1000+, banner de
+// cositt_announcement_banner 1030, modales 1050+, notificaciones 1055,
+// indicador de carga 1056) — es ambiente decorativo, nunca debe
+// competir visualmente con algo interactivo.
+.o_cositt_seasonal_theme_particles {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.o_cositt_seasonal_theme_particle {
+    position: absolute;
+    top: -8%;
+    font-size: 1.4rem;
+    line-height: 1;
+    pointer-events: none;
+    will-change: transform, opacity;
+}
+
+.o_cositt_seasonal_theme_particle_dot {
+    top: -8%;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.o_cositt_seasonal_theme_particle_fall {
+    animation-name: cositt-seasonal-fall;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+}
+
+.o_cositt_seasonal_theme_particle_pop {
+    top: 50%;
+    font-size: 1.6rem;
+    opacity: 0;
+    animation-name: cositt-seasonal-pop;
+    animation-timing-function: ease-out;
+    animation-iteration-count: infinite;
+}
+
+@keyframes cositt-seasonal-fall {
+    0% {
+        transform: translate3d(0, 0, 0);
+        opacity: 0;
+    }
+    10% {
+        opacity: .9;
+    }
+    90% {
+        opacity: .9;
+    }
+    100% {
+        transform: translate3d(var(--cositt-seasonal-drift, 0px), 115vh, 0);
+        opacity: 0;
+    }
+}
+
+@keyframes cositt-seasonal-pop {
+    0%, 100% {
+        opacity: 0;
+        transform: scale(.4);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.15);
+    }
+}
+
+// Decoración pura: quien pide menos movimiento en su sistema operativo
+// no debería tener que verla animarse igual.
+@media (prefers-reduced-motion: reduce) {
+    .o_cositt_seasonal_theme_particle {
+        animation: none !important;
+        opacity: 0 !important;
+    }
+}
