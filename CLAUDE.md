@@ -973,6 +973,49 @@ defecto al cerrar. README raíz actualizado (#9 marcado hecho).
 12 mensuales + 5 extra + 8 visual, de los cuales 3 fueron extensiones
 de módulos existentes en vez de módulos nuevos — #5→login_background,
 #10→kanban_ribbon_theme — y 6 son módulos nuevos propios de esta
-ronda). Pendiente de commit/push (no se hace salvo petición explícita
-del usuario) — a la fecha de este cierre, `cositt_announcement_banner`
-y `cositt_seasonal_theme` no estaban comiteados.
+ronda). Comiteado y pusheado a petición explícita del usuario
+(`ca32f8a`/`84eb9ec`/`5d945ba`).
+
+## #11 cositt_user_avatar_style — cerrado (backlog reinterpretado)
+
+Antes de codear, investigué si "avatares con iniciales" ya era nativo
+de Odoo — SÍ: `avatar.mixin` (core, heredado por `res.partner`,
+`hr.employee`...) ya genera un SVG con inicial + color `hsl(...)`
+aleatorio (hash sobre el nombre) para cualquier registro sin foto —
+confirmado viendo las propias capturas de contactos de este proyecto
+en sesiones anteriores. El hueco real que SÍ queda (direcciones hijas
+Factura/Envío, contactos de portal) es marginal. Se lo planteé al
+usuario con 3 opciones; eligió reinterpretar "estilo uniforme" como
+**paleta de marca**: en vez de perseguir el hueco menor, reemplazar el
+color aleatorio de Odoo por uno elegido (determinista, misma persona =
+mismo color) de una lista de colores configurable por compañía.
+
+Arquitectura: el override vive en `avatar.mixin` mismo (no en
+`res.partner`), así que aplica automáticamente a cualquier modelo que
+use el mixin, no solo Contactos — un único método
+(`_avatar_generate_svg`) sobreescrito, mínimo alcance. Sin JS, sin
+`session_info()` — 100% servidor, primer módulo de este proyecto sin
+ningún archivo de frontend.
+
+**Bug real que encontré yo mismo en testing** (no en code review): los
+campos `avatar_*` de `avatar.mixin` no declaraban depender de la
+compañía activa — Odoo cachea el valor por registro sin distinguir
+compañía a menos que el compute lo declare con
+`@api.depends_context("company")`. Sin eso, cambiar de compañía a
+mitad de transacción (`with_company()`) devolvía el color de la
+paleta de la compañía ANTERIOR, cacheado. Reproducido con un test real
+antes del fix, corregido redeclarando los 5 métodos
+`_compute_avatar_*` con el decorator (patrón que el propio core usa en
+otros campos `company_dependent`, ej. `res_partner._compute_vat_label`).
+
+Manifest: `depends: ["base_setup"]`, no `["base"]` — `company_id` en
+`res.config.settings` y la vista `base.res_config_settings_view_form`
+en realidad viven en `base_setup`, no en `base` (error real que dio
+`KeyError` al instalar, corregido).
+
+15 tests. Verificado en navegador real con dos paletas distintas
+(un color, dos colores) — color exacto confirmado tanto decodificando
+el SVG por Python (`odoo shell`) como con zoom sobre el avatar real en
+la ficha de un contacto de prueba. Contactos de prueba borrados y
+config reseteada al terminar. Manual PDF generado. README raíz
+actualizado (#11 marcado hecho, reinterpretado).

@@ -50,6 +50,7 @@ Ronda de módulos que tocan la interfaz visual del backend/frontend
 | 6 | [`cositt_company_favicon`](./addons/cositt/cositt_company_favicon) | Favicon (PNG) y título de pestaña personalizados por compañía, en todo el sitio | Community + Enterprise | Listo |
 | 7 | [`cositt_announcement_banner`](./addons/cositt/cositt_announcement_banner) | Banner superior configurable (mensaje + estilo) para avisos internos del backend | Community + Enterprise | Listo |
 | 8 | [`cositt_seasonal_theme`](./addons/cositt/cositt_seasonal_theme) | Icono temático + partículas animadas opcionales (Navidad/Feria/Cumpleaños/Campaña), con rango de fechas | Community + Enterprise | Listo |
+| 9 | [`cositt_user_avatar_style`](./addons/cositt/cositt_user_avatar_style) | Paleta de marca configurable para los avatares con iniciales que Odoo ya genera (contactos, empleados...) | Community + Enterprise | Listo |
 
 `cositt_home_wallpaper` requiere **Odoo Enterprise** (el Home Menu de
 pantalla completa no existe en Community — ver el README del propio
@@ -67,7 +68,7 @@ pantalla de login vive en el módulo base `web`, no en `web_enterprise`).
 | 8 | ~~`cositt_announcement_banner`~~ | Banner superior configurable para avisos internos | **Hecho** — módulo nuevo, tabla de arriba (#7 de Visual Modules). |
 | 9 | ~~`cositt_seasonal_theme`~~ | Decoraciones ligeras programables (Navidad, feria, aniversario, campaña...) | **Hecho** — módulo nuevo, tabla de arriba (#8 de Visual Modules). |
 | 10 | ~~`cositt_kanban_style`~~ | Más opciones visuales para tarjetas kanban: bordes, indicadores | **Hecho** — extendido `cositt_kanban_ribbon_theme` en vez de crear módulo nuevo (campo `style`: ribbon/borde/punto). Ver README de ese módulo. |
-| 11 | `cositt_user_avatar_style` | Avatares automáticos con iniciales, colores y estilo uniforme | — |
+| 11 | ~~`cositt_user_avatar_style`~~ | Avatares automáticos con iniciales, colores y estilo uniforme | **Hecho** (reinterpretado) — Odoo ya genera iniciales+color automáticamente (`avatar.mixin`); el módulo nuevo solo reemplaza el color aleatorio por una paleta de marca. Tabla de arriba (#9 de Visual Modules). |
 
 Sin orden de prioridad fijo. Antes de empezar cualquiera, revisar si el
 core de Odoo ya lo resuelve (mismo criterio que evitó duplicar trabajo
