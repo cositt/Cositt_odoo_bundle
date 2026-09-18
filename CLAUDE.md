@@ -35,7 +35,7 @@ Dockerfile ahora instala `tesseract-ocr` + `tesseract-ocr-spa` (apt) y
 `pytesseract` + `Pillow` (pip) — primera dependencia añadida al proyecto,
 aprobada explícitamente por el usuario.
 
-Admin de la base de desarrollo: login `admin`, password `dev_admin_2026`
+Admin de la base de desarrollo: login `admin`, password `admin`
 (solo válido en `cositt_plugins_dev`, entorno local, no es un secreto real).
 
 **Code review completado y aplicado.** `code-reviewer` encontró 2 HIGH + 4
@@ -823,3 +823,156 @@ SIEMPRE a este módulo), pisando el título/favicon específico de
 `/scoped_app` (página PWA "Añadir a la pantalla de inicio"). Corregido
 a `x_icon or cositt_favicon_url` + test de regresión. 21/21 tests.
 Manual PDF generado. Cerrado.
+
+## #8 cositt_announcement_banner — cerrado
+
+Barra de aviso fija arriba del backend (mensaje + estilo info/éxito/
+aviso/urgente, por compañía). Investigado antes de escribir código: lo
+único parecido en core/Enterprise es `s_announcement_scroll` de
+`website` (snippet decorativo de sitio público, sin relación) — sin
+solapamiento. Arquitectura: componente OWL propio registrado en
+`registry.category("main_components")` **solo cuando hay aviso
+activo** (mismo espíritu que los hermanos: cero impacto instalado y
+desactivado), `position: fixed` arriba de todo porque el contenedor
+que lo monta se renderiza después del navbar en el DOM
+(`web.WebClient`) — no hay forma de reordenarlo por flujo. Altura real
+medida con `ResizeObserver` (el mensaje puede ocupar 1 o varias
+líneas) y empuja `.o_web_client` con `padding-top` vía una custom
+property propia + clase marcador en `<html>`, mismo patrón ya
+validado en `cositt_backend_accent`/`cositt_login_background` (ver
+`feedback_css_custom_property_override_pattern` en memoria) pero sin
+reasignar ninguna custom property ajena esta vez — variable 100%
+propia.
+
+**Bug HIGH real encontrado en code review** (agente leyendo el SCSS
+real de `web` dentro del contenedor, no una suposición): el banner
+empujaba `.o_web_client` correctamente, pero
+`.o_notification_manager` (los toasts nativos: guardar, errores...)
+es un componente **hermano**, no descendiente — su `top` lo fija el
+core como cálculo de Sass en tiempo de compilación
+(`$o-navbar-height * 1.15`, 46px × 1.15), asumiendo que el navbar
+arranca en `y=0`. Con el aviso activo, cualquier toast nativo
+aparecía superpuesto sobre el navbar ya desplazado. Fix: sumar la
+misma custom property de altura al `top` de `.o_notification_manager`
+bajo la clase marcador. Confirmado en navegador real disparando un
+toast de verdad vía `env.services.notification.add(...)` en consola
+(con debug mode, `odoo.__WOWL_DEBUG__`): antes del fix aparecía pegado
+al borde superior real de la pantalla, después debajo del navbar
+desplazado, sin solape. Un `ValidationError` de guardado (probado con
+el propio validador de color de `cositt_backend_accent`) se mostró
+como **diálogo modal**, no toast — ya por encima del banner sin ajuste
+(z-index de Bootstrap 1050/1055 > 1030 del banner).
+
+Otro hallazgo (MEDIUM) del mismo review: un mensaje compuesto solo por
+espacios pasaba la validación de longitud y producía un banner "vacío"
+(solo el botón de cerrar, sin texto, sin aviso al admin). Corregido
+con `.strip()` en `_cositt_get_announcement_banner_config()` — se
+trata igual que "activado sin mensaje" (caso ya neutro). LOW del mismo
+review: `maxlength="300"` añadido al campo en la vista (antes solo se
+validaba al guardar) y comentario de z-index corregido con los valores
+reales de Bootstrap (1050/1055, no 1040/1050 como decía el comentario
+original).
+
+Bug de aislamiento de tests encontrado por mí mismo al re-correr la
+suite tras la verificación manual (mismo patrón que
+`cositt_kanban_ribbon_theme`): dos tests asumían la compañía por
+defecto limpia, pero `cositt_plugins_dev` es una base compartida con
+exploración manual entre sesiones — quedó `message`/`style` de una
+prueba anterior aunque `enabled` se hubiera desactivado. Corregido con
+un `setUp()` que fuerza un estado conocido en vez de asumirlo. 21/21
+tests.
+
+Validado en navegador real en dos rondas: activar/desactivar desde
+Ajustes → Cositt - Aviso, los 4 estilos, persistencia al navegar entre
+apps (SPA), botón de cierre (oculta y retira el `padding-top` al
+instante), ventana angosta (420×700) sin solape con el menú
+hamburguesa, y — tras el fix — un toast real sin solape con el navbar.
+Aviso desactivado y suite re-ejecutada después de cada ronda de
+exploración manual. Manual PDF generado con capturas reales de los 3
+pasos del flujo (desactivado, configurado, visible en Contactos).
+README raíz actualizado (tabla de Visual Modules + backlog, #8
+marcado hecho).
+
+## #9 cositt_seasonal_theme — cerrado
+
+Icono temático en el systray del backend (Navidad/Feria/Cumpleaños/
+Campaña personalizada) + partículas decorativas CSS opcionales (copos,
+flores, velas+destellos, puntos de colores), por compañía, con rango
+de fechas "Desde"/"Hasta" para activar/desactivar solo. Pedido
+explícito del usuario tras preguntarle el alcance (backlog original
+decía solo "decoraciones ligeras programables", ambiguo): quería
+ribbon/icono **y** animación, configurables por separado, con
+partículas específicas por tema (nieve, flores, velas+explosiones,
+colores variados en campaña).
+
+**Investigación de posición antes de escribir código** (evitó un bug
+seguro, no solo un hallazgo de review): se grepeó el core dentro del
+contenedor buscando todo lo que usa `position: fixed` — la esquina
+inferior derecha ya la ocupa `.o_loading_indicator` (z-index muy
+alto), la superior derecha las notificaciones nativas, y la izquierda
+justo debajo del navbar la ocupan breadcrumb/botones de cada vista
+(confirmado con las propias capturas de `cositt_announcement_banner`).
+Ninguna esquina de la pantalla estaba realmente libre. Decisión: el
+icono se registra como **ítem de systray**
+(`registry.category("systray")`, mismo mecanismo que Mensajes/
+Actividades/Usuario) en vez de un elemento fijo propio — evita esa
+clase entera de bug de raíz, no la parchea después.
+
+Partículas: overlay `position:fixed; pointer-events:none; z-index:5`,
+posiciones calculadas una sola vez por partícula en `setup()`
+(`Math.random()`), movimiento real 100% `@keyframes` CSS — sin bucle
+de JS por fotograma. Solo se registra en `main_components` cuando hay
+tema activo Y el admin dejó las partículas encendidas. Respeta
+`prefers-reduced-motion: reduce`.
+
+**Code review**: 1 HIGH + 3 MEDIUM + 2 LOW, todos corregidos:
+- HIGH: la clase `HttpCase` de los tests no reseteaba el estado de la
+  compañía en `setUp()` (a diferencia de la `TransactionCase`, que sí
+  lo hacía) — reproducido en vivo por el propio agente de review
+  contra `cositt_plugins_dev` (quedó `enabled=True` de mi propia
+  verificación manual). Mismo patrón que ya iba dos veces en este
+  proyecto (`cositt_kanban_ribbon_theme`, `cositt_announcement_banner`).
+  Corregido con un `setUp()` idéntico en ambas clases.
+- MEDIUM: `cositt_seasonal_theme_label` sin límite de longitud del
+  lado del servidor (solo `maxlength` client-side en la vista) —
+  inconsistente con el mismo patrón ya aplicado en
+  `cositt_login_background`/`cositt_announcement_banner`. Corregido
+  con `@api.constrains`.
+- MEDIUM (documentación): faltaban README.md y manual PDF — ya
+  resueltos en el cierre.
+- MEDIUM: faltaban tests de los bordes exactos del rango de fechas
+  (`today == date_start`/`today == date_end`) — la lógica ya era
+  correcta (ambos extremos inclusive), quedó sin verificar. Añadidos.
+- LOW: icono del systray sin `role="img"`/`aria-label` (el `title`
+  solo no es fiable para lectores de pantalla). Corregido.
+- LOW: `THEME_KINDS` (Python) y `SEASONAL_THEMES` (JS) son dos fuentes
+  de verdad sin chequeo de paridad — documentado con comentarios
+  cruzados en ambos archivos.
+
+**Verificación manual en navegador, con hallazgos propios de UI**
+(ninguno relacionado con el código del módulo en sí, todos del propio
+entorno de automatización): el `<select>` de "Tema" y el date picker
+de "Hasta" no respondían a clics por coordenada ni a `form_input`/
+`Escape` de forma confiable en este entorno — funcionó con navegación
+por teclado (flechas + Enter) para el select, y para el rango de
+fechas se verificó el flujo completo escribiendo la fecha directo vía
+`odoo shell` sobre la compañía real y confirmando en el DOM del
+navegador que tanto el icono como las partículas desaparecían — no
+solo `_cositt_get_seasonal_theme_config()` en aislado. Confirmado con
+capturas reales: tema Navidad con copos cayendo sobre Ajustes y sobre
+Contactos, tema Cumpleaños con velas + destellos simultáneos, icono
+con tooltip correcto leído directo del DOM (`title`/`textContent`).
+
+29 tests (25 efectivos + parametrizados HTTP), 0 fallos tras el fix.
+Manual PDF generado. Estado de la compañía reseteado a valores por
+defecto al cerrar. README raíz actualizado (#9 marcado hecho).
+
+## Backlog visual: queda #11 `cositt_user_avatar_style`
+
+Único ítem del backlog "Visual Modules" sin cerrar (8/8 del resto:
+12 mensuales + 5 extra + 8 visual, de los cuales 3 fueron extensiones
+de módulos existentes en vez de módulos nuevos — #5→login_background,
+#10→kanban_ribbon_theme — y 6 son módulos nuevos propios de esta
+ronda). Pendiente de commit/push (no se hace salvo petición explícita
+del usuario) — a la fecha de este cierre, `cositt_announcement_banner`
+y `cositt_seasonal_theme` no estaban comiteados.

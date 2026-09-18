@@ -48,6 +48,8 @@ Ronda de módulos que tocan la interfaz visual del backend/frontend
 | 4 | [`cositt_report_watermark`](./addons/cositt/cositt_report_watermark) | Marca de agua de texto configurable en todos los reportes PDF | Community + Enterprise | Listo |
 | 5 | [`cositt_backend_accent`](./addons/cositt/cositt_backend_accent) | Color de acento configurable para botones primarios, checkboxes/radios e ítem de menú activo del backend | Community + Enterprise | Listo |
 | 6 | [`cositt_company_favicon`](./addons/cositt/cositt_company_favicon) | Favicon (PNG) y título de pestaña personalizados por compañía, en todo el sitio | Community + Enterprise | Listo |
+| 7 | [`cositt_announcement_banner`](./addons/cositt/cositt_announcement_banner) | Banner superior configurable (mensaje + estilo) para avisos internos del backend | Community + Enterprise | Listo |
+| 8 | [`cositt_seasonal_theme`](./addons/cositt/cositt_seasonal_theme) | Icono temático + partículas animadas opcionales (Navidad/Feria/Cumpleaños/Campaña), con rango de fechas | Community + Enterprise | Listo |
 
 `cositt_home_wallpaper` requiere **Odoo Enterprise** (el Home Menu de
 pantalla completa no existe en Community — ver el README del propio
@@ -62,8 +64,8 @@ pantalla de login vive en el módulo base `web`, no en `web_enterprise`).
 | 5 | ~~`cositt_login_branding`~~ | Logo, mensaje y colores de empresa en el login | **Hecho** — extendido `cositt_login_background` en vez de crear módulo nuevo (mensaje + color de acento; el logo ya lo muestra el core sin cambios). Ver README de ese módulo. |
 | 6 | ~~`cositt_backend_accent`~~ | Elegir color corporativo para botones y elementos activos del backend | **Hecho** — módulo nuevo, tabla de arriba (#5 de Visual Modules). |
 | 7 | ~~`cositt_company_favicon`~~ | Favicon y título del navegador personalizados por empresa/base | **Hecho** — módulo nuevo, tabla de arriba (#6 de Visual Modules). |
-| 8 | `cositt_announcement_banner` | Banner superior configurable para avisos internos | — |
-| 9 | `cositt_seasonal_theme` | Decoraciones ligeras programables (Navidad, feria, aniversario, campaña...) | — |
+| 8 | ~~`cositt_announcement_banner`~~ | Banner superior configurable para avisos internos | **Hecho** — módulo nuevo, tabla de arriba (#7 de Visual Modules). |
+| 9 | ~~`cositt_seasonal_theme`~~ | Decoraciones ligeras programables (Navidad, feria, aniversario, campaña...) | **Hecho** — módulo nuevo, tabla de arriba (#8 de Visual Modules). |
 | 10 | ~~`cositt_kanban_style`~~ | Más opciones visuales para tarjetas kanban: bordes, indicadores | **Hecho** — extendido `cositt_kanban_ribbon_theme` en vez de crear módulo nuevo (campo `style`: ribbon/borde/punto). Ver README de ese módulo. |
 | 11 | `cositt_user_avatar_style` | Avatares automáticos con iniciales, colores y estilo uniforme | — |
 
