@@ -1,0 +1,38 @@
+// El banner vive fuera del flujo normal de .o_web_client (el
+// MainComponentsContainer que lo monta se renderiza después del navbar
+// y del área de acción en el DOM — ver web/static/src/webclient/webclient.xml
+// — así que reordenarlo por flujo no es una opción). Se fija arriba de
+// todo con position:fixed y se empuja el resto del backend hacia abajo
+// con padding-top, cuya altura exacta fija el JS (announcement_banner.js)
+// según el alto real renderizado del banner.
+.o_cositt_announcement_banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    // $zindex-fixed de Bootstrap (bootstrap/scss/_variables.scss) — por
+    // debajo de modal-backdrop (1050) y modal (1055): un diálogo abierto
+    // debe seguir tapando el aviso, no al revés. Por encima del navbar
+    // (sin z-index propio, position:relative) para que se vea siempre
+    // como una franja superior.
+    z-index: 1030;
+    border-radius: 0;
+    padding: .5rem 1rem;
+}
+
+html.o_cositt_announcement_banner_active .o_web_client {
+    padding-top: var(--cositt-announcement-banner-height, 0px);
+}
+
+// El gestor de notificaciones nativo (toasts de guardado, errores...)
+// es un componente hermano en main_components, no descendiente de
+// .o_web_client — el padding-top de arriba no lo mueve. Su `top` lo fija
+// web/static/src/core/notifications/notification.scss como cálculo de
+// Sass en tiempo de compilación (`$o-navbar-height * 1.15`, 46px * 1.15,
+// sin variable CSS en runtime), asumiendo que el navbar arranca en
+// y=0 — deja de ser cierto con el banner activo. Bug real encontrado en
+// code review: sin este ajuste, cualquier notificación nativa aparece
+// superpuesta sobre el navbar desplazado en vez de debajo.
+html.o_cositt_announcement_banner_active .o_notification_manager {
+    top: calc(46px * 1.15 + var(--cositt-announcement-banner-height, 0px));
+}

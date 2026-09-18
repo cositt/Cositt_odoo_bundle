@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.cositt.announcement.banner</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form" position="inside">
+                <app data-string="Cositt - Aviso" string="Cositt - Aviso" name="cositt_announcement_banner"
+                     groups="base.group_system">
+                    <block title="Aviso de backend" name="cositt_announcement_banner_setting_container">
+                        <setting id="cositt_announcement_banner_setting"
+                                 help="Barra fija arriba del backend, visible para todos los usuarios internos de esta compañía hasta que la cierren.">
+                            <field name="cositt_announcement_banner_enabled"/>
+                            <div class="content-group" invisible="not cositt_announcement_banner_enabled">
+                                <div class="row mt16">
+                                    <label for="cositt_announcement_banner_message" string="Mensaje" class="col-lg-3 o_light_label"/>
+                                    <field name="cositt_announcement_banner_message" placeholder="Ej: Mantenimiento programado el viernes 20h" maxlength="300"/>
+                                </div>
+                                <div class="row mt8">
+                                    <label for="cositt_announcement_banner_style" string="Estilo" class="col-lg-3 o_light_label"/>
+                                    <field name="cositt_announcement_banner_style"/>
+                                </div>
+                            </div>
+                        </setting>
+                    </block>
+                </app>
+            </xpath>
+        </field>
+    </record>
+</odoo>

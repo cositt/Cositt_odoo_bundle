@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="cositt_announcement_banner.AnnouncementBanner">
+        <div t-if="!state.dismissed" t-ref="root" t-att-class="rootClass" role="alert">
+            <span class="o_cositt_announcement_banner_message" t-esc="config.message"/>
+            <button type="button" class="btn-close" aria-label="Close" t-on-click="dismiss"/>
+        </div>
+    </t>
+
+</templates>
